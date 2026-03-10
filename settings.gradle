@@ -1,0 +1,5 @@
+rootProject.name = 'captstone'
+include 'api'
+include 'domain'
+include 'common'
+include 'infrastructure'
