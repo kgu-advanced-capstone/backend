@@ -73,6 +73,7 @@ jobs:
               echo "SPRING_DATASOURCE_USERNAME=${{ secrets.DB_USERNAME }}" >> .env
               echo "SPRING_DATASOURCE_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
               echo "DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}" >> .env
+              echo "GCLOUD_RW_API_KEY=${{ secrets.GCLOUD_RW_API_KEY }}" >> .env  # grafana alloy api 키
               docker compose pull
               docker compose up -d
               docker image prune -f
