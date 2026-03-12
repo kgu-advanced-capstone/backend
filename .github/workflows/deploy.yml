@@ -26,7 +26,7 @@ jobs:
 
   # 배포 단계: 오직 main 브랜치일 때만 실행
     # 빌드와 배포를 하나로 합친 최종 스크립트
-    deploy:
+  deploy:
       if: github.ref == 'refs/heads/main'
       runs-on: ubuntu-latest
       steps:
