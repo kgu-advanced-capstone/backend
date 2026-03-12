@@ -35,3 +35,6 @@ out/
 
 ### VS Code ###
 .vscode/
+# Docker Data
+docker/mysql/data/
+docker/redis/data/

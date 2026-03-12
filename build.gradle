@@ -39,6 +39,7 @@ subprojects {
         annotationProcessor 'org.projectlombok:lombok'
         testAnnotationProcessor 'org.projectlombok:lombok'
         testCompileOnly 'org.projectlombok:lombok'
+
     }
 
     test {
