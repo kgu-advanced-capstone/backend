@@ -22,7 +22,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build with Gradle
-        run: ./gradlew clean :api-application:bootJar
+        run: ./gradlew clean :api:bootJar
 
   # 배포 단계: 오직 main 브랜치일 때만 실행
   deploy:
