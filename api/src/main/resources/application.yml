@@ -1,5 +1,13 @@
 spring:
   application:
     name: api
-  profiles:
-    active: local
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "prometheus,health,info" # prometheus를 명시적으로 포함
+  endpoint:
+    prometheus:
+      enabled: true
+    health:
+      show-details: always

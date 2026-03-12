@@ -18,12 +18,5 @@ spring:
       host: localhost
       port: 6379
 
-management:
-  endpoints:
-    web:
-      exposure:
-        include: prometheus, health # ??(????)?? ? ? ?? ??
-  metrics:
-    tags:
-      application: my-api-server # Grafana ?? ??? ??
+
 
