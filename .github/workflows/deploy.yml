@@ -2,7 +2,7 @@ name: Java 21 CI/CD with Azure MySQL
 
 on:
   push:
-    branches: [ "main", "feat/**" ]
+    branches: [ "main", "feat/**", "feature/" ]
 
 jobs:
   # 빌드 단계: 모든 브랜치에서 실행
