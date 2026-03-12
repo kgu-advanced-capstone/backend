@@ -68,6 +68,7 @@ jobs:
             key: ${{ secrets.SSH_PRIVATE_KEY }}
             script: |
               mkdir -p ~/app && cd ~/app
+              
               echo "SPRING_DATASOURCE_URL=${{ secrets.DB_URL }}" > .env
               echo "SPRING_DATASOURCE_USERNAME=${{ secrets.DB_USERNAME }}" >> .env
               echo "SPRING_DATASOURCE_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
