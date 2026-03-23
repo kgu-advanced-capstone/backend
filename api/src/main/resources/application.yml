@@ -2,32 +2,35 @@ spring:
   application:
     name: api
   datasource:
-    # HikariCP 지표에 이름을 부여하여 Prometheus에서 식별하기 쉽게 함
     hikari:
       pool-name: mysql-main-pool
+  jpa:
+    properties:
+      hibernate:
+        generate_statistics: true
+        format_sql: true
 
-    jpa:
-      properties:
-        hibernate:
-          # [핵심] Hibernate 통계 수집 엔진 활성화
-          generate_statistics: true
-          format_sql: true
+server:
+  servlet:
+    session:
+      cookie:
+        http-only: true
+        same-site: lax
+        name: JSESSIONID
+      timeout: 30m
 
 management:
   endpoints:
     web:
       exposure:
-        include: "prometheus,health,info" # prometheus를 명시적으로 포함
+        include: "prometheus,health,info"
   endpoint:
     prometheus:
       enabled: true
     health:
       show-details: always
-
   metrics:
     enable:
-      # 하이버네이트 지표 수집 명시적 허용
       hibernate: true
     tags:
-      # 모든 메트릭에 애플리케이션 이름을 태그로 붙임 (관리 용이)
       application: ${spring.application.name}
