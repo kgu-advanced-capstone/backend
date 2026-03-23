@@ -1,5 +1,6 @@
 package kr.ac.kyonggi.api.auth.service;
 
+import kr.ac.kyonggi.api.config.JpaTestConfig;
 import kr.ac.kyonggi.common.exception.UserNotFoundException;
 import kr.ac.kyonggi.domain.entity.User;
 import kr.ac.kyonggi.domain.service.UserService;
@@ -15,7 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DataJpaTest
-@Import(UserServiceImpl.class)
+@Import({UserServiceImpl.class, JpaTestConfig.class})
 @ActiveProfiles("test")
 class UserServiceImplTest {
 

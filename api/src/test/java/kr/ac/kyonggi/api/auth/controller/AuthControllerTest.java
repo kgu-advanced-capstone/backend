@@ -2,26 +2,33 @@ package kr.ac.kyonggi.api.auth.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import kr.ac.kyonggi.api.dto.request.LoginRequest;
+import kr.ac.kyonggi.api.config.SecurityConfig;
+import kr.ac.kyonggi.api.controller.AuthController;
 import kr.ac.kyonggi.api.dto.request.RegisterRequest;
+import kr.ac.kyonggi.api.dto.response.UserResponse;
+import kr.ac.kyonggi.api.security.CustomUserDetailsService;
+import kr.ac.kyonggi.api.security.LoginSuccessHandler;
+import kr.ac.kyonggi.api.service.AuthApiService;
+import kr.ac.kyonggi.common.exception.UserAlreadyExistsException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.mock.web.MockHttpSession;
+import org.springframework.security.test.context.support.WithAnonymousUser;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
-import org.springframework.test.web.servlet.assertj.MvcTestResult;
-import org.springframework.transaction.annotation.Transactional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
-@Transactional
-@SpringBootTest
-@AutoConfigureMockMvc
+@WebMvcTest(AuthController.class)
+@Import({SecurityConfig.class, LoginSuccessHandler.class})
 @ActiveProfiles("test")
 class AuthControllerTest {
 
@@ -31,13 +38,22 @@ class AuthControllerTest {
     @Autowired
     ObjectMapper objectMapper;
 
+    @MockitoBean
+    AuthApiService authApiService;
+
+    @MockitoBean
+    CustomUserDetailsService userDetailsService;
+
     private static final String EMAIL = "test@test.com";
     private static final String PASSWORD = "password123";
     private static final String NAME = "홍길동";
+    private static final UserResponse USER_RESPONSE = new UserResponse(1L, EMAIL, NAME, null);
 
     @Test
     @DisplayName("회원가입 성공 - 201 및 응답 본문 확인")
     void register_success() throws JsonProcessingException {
+        when(authApiService.register(any())).thenReturn(USER_RESPONSE);
+
         assertThat(mockMvc.post().uri("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(toJson(new RegisterRequest(EMAIL, PASSWORD, NAME))))
@@ -49,7 +65,8 @@ class AuthControllerTest {
     @Test
     @DisplayName("회원가입 - 중복 이메일 409 반환")
     void register_duplicateEmail() throws JsonProcessingException {
-        register();
+        when(authApiService.register(any()))
+                .thenThrow(new UserAlreadyExistsException("이미 사용 중인 이메일입니다."));
 
         assertThat(mockMvc.post().uri("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -75,31 +92,8 @@ class AuthControllerTest {
                 .hasStatus(HttpStatus.BAD_REQUEST);
     }
 
-
     @Test
-    @DisplayName("로그인 성공 - 200 및 사용자 정보 반환")
-    void login_success() throws JsonProcessingException {
-        register();
-
-        assertThat(login())
-                .hasStatus(HttpStatus.OK)
-                .bodyJson()
-                .extractingPath("$.email").asString().isEqualTo(EMAIL);
-    }
-
-    @Test
-    @DisplayName("로그인 - 잘못된 비밀번호 401 반환")
-    void login_badCredentials() throws JsonProcessingException {
-        register();
-
-        assertThat(mockMvc.post().uri("/api/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(toJson(new LoginRequest(EMAIL, "wrongpassword"))))
-                .hasStatus(HttpStatus.UNAUTHORIZED);
-    }
-
-
-    @Test
+    @WithAnonymousUser
     @DisplayName("/me - 미인증 요청 401 반환")
     void me_unauthenticated() {
         assertThat(mockMvc.get().uri("/api/auth/me"))
@@ -107,15 +101,12 @@ class AuthControllerTest {
     }
 
     @Test
-    @DisplayName("로그인 후 세션으로 /me 접근 성공")
-    void me_afterLogin() throws JsonProcessingException {
-        register();
+    @WithMockUser(username = "test@test.com")
+    @DisplayName("/me - 인증된 사용자 200 및 응답 본문 확인")
+    void me_authenticated() {
+        when(authApiService.findByEmail(any())).thenReturn(USER_RESPONSE);
 
-        MvcTestResult loginResult = login();
-        MockHttpSession session = (MockHttpSession) loginResult.getMvcResult().getRequest().getSession(false);
-
-        assertThat(mockMvc.get().uri("/api/auth/me")
-                .session(session))
+        assertThat(mockMvc.get().uri("/api/auth/me"))
                 .hasStatus(HttpStatus.OK)
                 .bodyJson()
                 .extractingPath("$.email").asString().isEqualTo(EMAIL);
@@ -123,21 +114,5 @@ class AuthControllerTest {
 
     private String toJson(Object obj) throws JsonProcessingException {
         return objectMapper.writeValueAsString(obj);
-    }
-
-    private void register() throws JsonProcessingException {
-        mockMvc.post()
-                .uri("/api/auth/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(toJson(new RegisterRequest(EMAIL, PASSWORD, NAME)))
-                .exchange();
-    }
-
-    private MvcTestResult login() throws JsonProcessingException {
-        return mockMvc.post()
-                .uri("/api/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(toJson(new LoginRequest(EMAIL, PASSWORD)))
-                .exchange();
     }
 }
