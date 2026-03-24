@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(while read:*)",
+      "Bash(do echo:*)",
+      "Read(//mnt/c/project/captstone/**)",
+      "Bash(done)",
+      "Bash(find /mnt/c/project/captstone -maxdepth 3 -type d ! -path */.git* ! -path */build/* ! -path */.gradle/*)",
+      "Bash(find /mnt/c/project/captstone/api/src -type f -name *.java)",
+      "Bash(find /mnt/c/project/captstone -name *.properties -o -name *.yml -o -name *.yaml)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
+    ]
+  }
+}
