@@ -1,6 +1,5 @@
-package kr.ac.kyonggi.domain.repository;
+package kr.ac.kyonggi.domain.user;
 
-import kr.ac.kyonggi.domain.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

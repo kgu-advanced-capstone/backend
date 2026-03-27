@@ -1,4 +1,4 @@
-package kr.ac.kyonggi.api.dto.request;
+package kr.ac.kyonggi.api.auth.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

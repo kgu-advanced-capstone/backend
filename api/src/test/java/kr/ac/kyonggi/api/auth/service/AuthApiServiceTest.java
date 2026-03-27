@@ -1,10 +1,10 @@
 package kr.ac.kyonggi.api.auth.service;
 
-import kr.ac.kyonggi.api.dto.request.RegisterRequest;
-import kr.ac.kyonggi.api.dto.response.UserResponse;
-import kr.ac.kyonggi.api.service.AuthApiService;
+import kr.ac.kyonggi.api.auth.dto.RegisterRequest;
+import kr.ac.kyonggi.api.auth.dto.UserResponse;
+import kr.ac.kyonggi.api.auth.AuthApiService;
 import kr.ac.kyonggi.common.exception.UserAlreadyExistsException;
-import kr.ac.kyonggi.domain.repository.UserRepository;
+import kr.ac.kyonggi.domain.user.UserRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
