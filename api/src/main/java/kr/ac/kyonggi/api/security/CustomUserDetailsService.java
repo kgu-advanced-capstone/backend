@@ -1,7 +1,7 @@
 package kr.ac.kyonggi.api.security;
 
-import kr.ac.kyonggi.domain.entity.User;
-import kr.ac.kyonggi.domain.repository.UserRepository;
+import kr.ac.kyonggi.domain.user.User;
+import kr.ac.kyonggi.domain.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;

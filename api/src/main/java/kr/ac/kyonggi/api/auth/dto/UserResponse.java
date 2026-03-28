@@ -1,6 +1,6 @@
-package kr.ac.kyonggi.api.dto.response;
+package kr.ac.kyonggi.api.auth.dto;
 
-import kr.ac.kyonggi.domain.entity.User;
+import kr.ac.kyonggi.domain.user.User;
 
 public record UserResponse(Long id, String email, String name, String profileImage) {
 

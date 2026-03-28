@@ -1,9 +1,9 @@
-package kr.ac.kyonggi.api.controller;
+package kr.ac.kyonggi.api.auth;
 
 import jakarta.validation.Valid;
-import kr.ac.kyonggi.api.dto.request.RegisterRequest;
-import kr.ac.kyonggi.api.dto.response.UserResponse;
-import kr.ac.kyonggi.api.service.AuthApiService;
+import kr.ac.kyonggi.api.auth.dto.RegisterRequest;
+import kr.ac.kyonggi.api.auth.dto.UserResponse;
+import kr.ac.kyonggi.api.auth.AuthApiService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

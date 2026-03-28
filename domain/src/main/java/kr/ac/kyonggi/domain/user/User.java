@@ -1,8 +1,7 @@
-package kr.ac.kyonggi.domain.entity;
+package kr.ac.kyonggi.domain.user;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
@@ -37,11 +36,14 @@ public class User {
     @LastModifiedDate
     private LocalDateTime updatedAt;
 
-    @Builder
-    public User(String email, String password, String name, String profileImage) {
-        this.email = email;
-        this.password = password;
-        this.name = name;
-        this.profileImage = profileImage;
+    public static User create(UserCreateCommand command) {
+        return new User(command);
+    }
+
+    private User(UserCreateCommand command) {
+        this.email = command.email();
+        this.password = command.password();
+        this.name = command.name();
+        this.profileImage = command.profileImage();
     }
 }

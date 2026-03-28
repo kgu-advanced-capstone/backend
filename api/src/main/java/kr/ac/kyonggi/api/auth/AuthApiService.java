@@ -1,10 +1,11 @@
-package kr.ac.kyonggi.api.service;
+package kr.ac.kyonggi.api.auth;
 
-import kr.ac.kyonggi.api.dto.request.RegisterRequest;
-import kr.ac.kyonggi.api.dto.response.UserResponse;
+import kr.ac.kyonggi.api.auth.dto.RegisterRequest;
+import kr.ac.kyonggi.api.auth.dto.UserResponse;
 import kr.ac.kyonggi.common.exception.UserAlreadyExistsException;
-import kr.ac.kyonggi.domain.entity.User;
-import kr.ac.kyonggi.domain.service.UserService;
+import kr.ac.kyonggi.domain.user.User;
+import kr.ac.kyonggi.domain.user.UserCreateCommand;
+import kr.ac.kyonggi.domain.user.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -17,21 +18,18 @@ public class AuthApiService {
     private final PasswordEncoder passwordEncoder;
 
     public UserResponse register(RegisterRequest request) {
-        if (userService.existsByEmail(request.email())) {
+        if (userService.isEmailTaken(request.email())) {
             throw new UserAlreadyExistsException("이미 사용 중인 이메일입니다: " + request.email());
         }
 
-        User user = User.builder()
-                .email(request.email())
-                .password(passwordEncoder.encode(request.password()))
-                .name(request.name())
-                .build();
+        User user = User.create(new UserCreateCommand(
+                request.email(), passwordEncoder.encode(request.password()), request.name(), null));
 
-        User saved = userService.save(user);
+        User saved = userService.register(user);
         return UserResponse.from(saved);
     }
 
     public UserResponse findByEmail(String email) {
-        return UserResponse.from(userService.findByEmail(email));
+        return UserResponse.from(userService.getByEmail(email));
     }
 }
