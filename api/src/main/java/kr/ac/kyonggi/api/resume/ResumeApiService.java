@@ -2,6 +2,8 @@ package kr.ac.kyonggi.api.resume;
 
 import kr.ac.kyonggi.api.resume.dto.ResumeResponse;
 import kr.ac.kyonggi.common.exception.ResumeNotFoundException;
+import kr.ac.kyonggi.domain.experience.Experience;
+import kr.ac.kyonggi.domain.experience.ExperienceService;
 import kr.ac.kyonggi.domain.project.Project;
 import kr.ac.kyonggi.domain.project.ProjectMember;
 import kr.ac.kyonggi.domain.project.ProjectService;
@@ -24,6 +26,7 @@ public class ResumeApiService {
     private final ResumeService resumeService;
     private final UserService userService;
     private final ProjectService projectService;
+    private final ExperienceService experienceService;
     private final GeminiResumeClient geminiClient;
 
     @Transactional(readOnly = true)
@@ -45,11 +48,16 @@ public class ResumeApiService {
         List<ResumedExperience> experiences = memberships.stream()
                 .map(member -> {
                     Project project = member.getProject();
+                    String experienceContent = experienceService
+                            .findByProjectIdAndUserId(project.getId(), userId)
+                            .map(Experience::getContent)
+                            .orElse(null);
                     List<String> keyPoints = geminiClient.generateKeyPoints(
                             project.getTitle(),
                             project.getDescription(),
                             project.getCategory(),
-                            project.getSkills()
+                            project.getSkills(),
+                            experienceContent
                     );
                     return ResumedExperience.of(project.getId(), project.getTitle(), keyPoints);
                 })
