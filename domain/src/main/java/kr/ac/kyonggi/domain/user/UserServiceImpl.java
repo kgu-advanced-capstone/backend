@@ -34,4 +34,13 @@ public class UserServiceImpl implements UserService {
     public boolean isEmailTaken(String email) {
         return userRepository.existsByEmail(email);
     }
+
+    @Override
+    @Transactional
+    public User updateProfile(Long userId, UpdateProfileCommand command) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("사용자를 찾을 수 없습니다: " + userId));
+        user.updateProfile(command);
+        return user;
+    }
 }

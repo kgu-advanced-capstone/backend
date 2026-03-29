@@ -30,6 +30,12 @@ public class User {
 
     private String profileImage;
 
+    private String phone;
+
+    private String github;
+
+    private String blog;
+
     @CreatedDate
     private LocalDateTime createdAt;
 
@@ -45,5 +51,13 @@ public class User {
         this.password = command.password();
         this.name = command.name();
         this.profileImage = command.profileImage();
+    }
+
+    public void updateProfile(UpdateProfileCommand command) {
+        if (command.name() != null) this.name = command.name();
+        if (command.phone() != null) this.phone = command.phone();
+        if (command.github() != null) this.github = command.github();
+        if (command.blog() != null) this.blog = command.blog();
+        if (command.profileImage() != null) this.profileImage = command.profileImage();
     }
 }

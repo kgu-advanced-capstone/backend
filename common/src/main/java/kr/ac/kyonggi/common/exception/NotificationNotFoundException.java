@@ -1,0 +1,10 @@
+package kr.ac.kyonggi.common.exception;
+
+import org.springframework.http.HttpStatus;
+
+public class NotificationNotFoundException extends BusinessException {
+
+    public NotificationNotFoundException(String message) {
+        super(message, HttpStatus.NOT_FOUND);
+    }
+}
