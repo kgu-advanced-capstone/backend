@@ -9,4 +9,6 @@ public interface UserService {
     User getById(Long id);
 
     boolean isEmailTaken(String email);
+
+    User updateProfile(Long userId, UpdateProfileCommand command);
 }

@@ -2,6 +2,7 @@ package kr.ac.kyonggi.api.auth.service;
 
 import kr.ac.kyonggi.api.config.JpaTestConfig;
 import kr.ac.kyonggi.common.exception.UserNotFoundException;
+import kr.ac.kyonggi.domain.user.UpdateProfileCommand;
 import kr.ac.kyonggi.domain.user.User;
 import kr.ac.kyonggi.domain.user.UserCreateCommand;
 import kr.ac.kyonggi.domain.user.UserService;
@@ -83,5 +84,42 @@ class UserServiceImplTest {
     @DisplayName("사용하지 않는 이메일은 isEmailTaken이 false 반환")
     void isEmailTaken_returnsFalse() {
         assertThat(userService.isEmailTaken("nobody@test.com")).isFalse();
+    }
+
+    @Test
+    @DisplayName("updateProfile()은 null이 아닌 필드만 수정된다")
+    void updateProfile_updatesNonNullFields() {
+        User saved = userService.register(buildUser("test@test.com"));
+
+        User updated = userService.updateProfile(saved.getId(),
+                new UpdateProfileCommand("새이름", "010-1234-5678", "https://github.com/test", "https://blog.test", null));
+
+        assertThat(updated.getName()).isEqualTo("새이름");
+        assertThat(updated.getPhone()).isEqualTo("010-1234-5678");
+        assertThat(updated.getGithub()).isEqualTo("https://github.com/test");
+        assertThat(updated.getBlog()).isEqualTo("https://blog.test");
+        assertThat(updated.getProfileImage()).isNull();
+    }
+
+    @Test
+    @DisplayName("updateProfile()은 null 필드를 기존 값으로 유지한다")
+    void updateProfile_nullFields_notOverwritten() {
+        User saved = userService.register(buildUser("test@test.com"));
+        userService.updateProfile(saved.getId(),
+                new UpdateProfileCommand(null, "010-1111-2222", null, null, null));
+
+        User result = userService.updateProfile(saved.getId(),
+                new UpdateProfileCommand(null, null, "https://github.com/test", null, null));
+
+        assertThat(result.getPhone()).isEqualTo("010-1111-2222");
+        assertThat(result.getGithub()).isEqualTo("https://github.com/test");
+    }
+
+    @Test
+    @DisplayName("updateProfile()은 존재하지 않는 ID면 UserNotFoundException을 던진다")
+    void updateProfile_nonExistingId_throwsUserNotFoundException() {
+        assertThatThrownBy(() -> userService.updateProfile(99L,
+                new UpdateProfileCommand("이름", null, null, null, null)))
+                .isInstanceOf(UserNotFoundException.class);
     }
 }
