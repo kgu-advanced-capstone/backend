@@ -29,13 +29,13 @@ public class GeminiResumeClient {
 
     private final ObjectMapper objectMapper;
 
-    public List<String> generateKeyPoints(String title, String description, String category, List<String> skills) {
+    public List<String> generateKeyPoints(String title, String description, String category, List<String> skills, String experienceContent) {
         if (apiKey == null || apiKey.isBlank()) {
             log.warn("Gemini API key is not configured. Returning empty key points.");
             return List.of();
         }
         try {
-            String requestBody = buildRequestBody(title, description, category, skills);
+            String requestBody = buildRequestBody(title, description, category, skills, experienceContent);
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(GEMINI_URL + "?key=" + apiKey))
                     .header("Content-Type", "application/json")
@@ -50,20 +50,22 @@ public class GeminiResumeClient {
         }
     }
 
-    private String buildRequestBody(String title, String description, String category, List<String> skills) {
+    private String buildRequestBody(String title, String description, String category, List<String> skills, String experienceContent) {
         String prompt = String.format("""
-                다음 프로젝트 정보를 바탕으로, 이력서에 기재할 핵심 성과 포인트 2~3개를 한국어로 작성해주세요.
+                다음 프로젝트 정보와 참여자의 경험 기록을 바탕으로, 이력서에 기재할 핵심 성과 포인트 2~3개를 한국어로 작성해주세요.
                 프로젝트명: %s
                 설명: %s
                 카테고리: %s
                 기술 스택: %s
+                참여자 경험 기록: %s
 
                 응답은 반드시 JSON 배열 형식으로만 작성하세요. 예시: ["포인트1", "포인트2", "포인트3"]
                 """,
                 title,
                 description != null ? description : "",
                 category,
-                String.join(", ", skills)
+                String.join(", ", skills),
+                experienceContent != null ? experienceContent : ""
         );
         try {
             Map<String, Object> body = Map.of(
