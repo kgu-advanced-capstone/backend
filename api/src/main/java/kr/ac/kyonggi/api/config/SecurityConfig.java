@@ -64,7 +64,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/actuator/**").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-                        .requestMatchers("/api/auth/register", "/api/auth/login").permitAll()
+                        .requestMatchers("/api/auth/register", "/api/auth/login", "/api/auth/logout").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/projects", "/api/projects/*").permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(ex -> ex

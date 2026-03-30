@@ -89,6 +89,52 @@ class AuthIntegrationTest {
     }
 
     @Test
+    @DisplayName("로그아웃 후 세션 무효화 확인")
+    void logout_invalidatesSession() {
+        // 1. 회원가입
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        String registerBody = """
+                {
+                  "email": "logout@test.com",
+                  "password": "password123",
+                  "name": "로그아웃테스트"
+                }
+                """;
+        restTemplate.exchange("/api/auth/register", HttpMethod.POST,
+                new HttpEntity<>(registerBody, headers), Map.class);
+
+        // 2. 로그인
+        String loginBody = """
+                {
+                  "email": "logout@test.com",
+                  "password": "password123"
+                }
+                """;
+        ResponseEntity<Map> loginResponse = restTemplate.exchange(
+                "/api/auth/login", HttpMethod.POST,
+                new HttpEntity<>(loginBody, headers), Map.class);
+        List<String> cookies = loginResponse.getHeaders().get(HttpHeaders.SET_COOKIE);
+        String jsessionId = cookies.stream()
+                .filter(c -> c.startsWith("JSESSIONID"))
+                .findFirst().orElseThrow().split(";")[0];
+
+        // 3. 로그아웃
+        HttpHeaders logoutHeaders = new HttpHeaders();
+        logoutHeaders.set(HttpHeaders.COOKIE, jsessionId);
+        ResponseEntity<Void> logoutResponse = restTemplate.exchange(
+                "/api/auth/logout", HttpMethod.POST,
+                new HttpEntity<>(logoutHeaders), Void.class);
+        assertThat(logoutResponse.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+
+        // 4. 로그아웃 후 /me 접근 시 401
+        ResponseEntity<Map> meResponse = restTemplate.exchange(
+                "/api/auth/me", HttpMethod.GET,
+                new HttpEntity<>(logoutHeaders), Map.class);
+        assertThat(meResponse.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+    }
+
+    @Test
     @DisplayName("중복 이메일 회원가입 시 409 반환")
     void register_duplicateEmail_returns409() {
         HttpHeaders headers = new HttpHeaders();
