@@ -1,6 +1,6 @@
 package kr.ac.kyonggi.domain.notification;
 
-public record NotificationCreateCommand(
+public record NotificationCreatedEvent(
         Long userId,
         String message
 ) {

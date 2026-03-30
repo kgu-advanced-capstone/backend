@@ -6,9 +6,7 @@ import kr.ac.kyonggi.api.project.dto.MyProjectResponse;
 import kr.ac.kyonggi.api.project.dto.ProjectDetailResponse;
 import kr.ac.kyonggi.api.project.dto.ProjectListResponse;
 import kr.ac.kyonggi.api.project.dto.ProjectSummaryResponse;
-import kr.ac.kyonggi.domain.notification.Notification;
-import kr.ac.kyonggi.domain.notification.NotificationCreateCommand;
-import kr.ac.kyonggi.domain.notification.NotificationService;
+import kr.ac.kyonggi.domain.notification.NotificationCreatedEvent;
 import kr.ac.kyonggi.domain.project.Project;
 import kr.ac.kyonggi.domain.project.ProjectCreateCommand;
 import kr.ac.kyonggi.domain.project.ProjectMember;
@@ -16,6 +14,7 @@ import kr.ac.kyonggi.domain.project.ProjectService;
 import kr.ac.kyonggi.domain.user.User;
 import kr.ac.kyonggi.domain.user.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -31,7 +30,7 @@ public class ProjectApiService {
 
     private final ProjectService projectService;
     private final UserService userService;
-    private final NotificationService notificationService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public ProjectListResponse getProjects(String category, int page, int limit, String search) {
         PageRequest pageable = PageRequest.of(page - 1, limit, Sort.by("createdAt").descending());
@@ -58,8 +57,8 @@ public class ProjectApiService {
 
         Project saved = projectService.create(project);
         projectService.apply(saved.getId(), author.getId());
-        notificationService.create(Notification.create(new NotificationCreateCommand(
-                author, "\"" + saved.getTitle() + "\" 프로젝트에 참가했습니다.")));
+        eventPublisher.publishEvent(new NotificationCreatedEvent(
+                author.getId(), "\"" + saved.getTitle() + "\" 프로젝트에 참가했습니다."));
 
         return ProjectDetailResponse.from(saved, projectService.getMemberCount(saved.getId()));
     }
@@ -68,8 +67,8 @@ public class ProjectApiService {
     public void applyProject(Long projectId, String userEmail) {
         User user = userService.getByEmail(userEmail);
         ProjectMember member = projectService.apply(projectId, user.getId());
-        notificationService.create(Notification.create(new NotificationCreateCommand(
-                user, "\"" + member.getProject().getTitle() + "\" 프로젝트에 참가했습니다.")));
+        eventPublisher.publishEvent(new NotificationCreatedEvent(
+                user.getId(), "\"" + member.getProject().getTitle() + "\" 프로젝트에 참가했습니다."));
     }
 
     @Transactional

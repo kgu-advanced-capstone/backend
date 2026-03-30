@@ -43,7 +43,7 @@ class NotificationApiServiceTest {
         user = User.create(new UserCreateCommand("test@test.com", "pw", "홍길동", null));
         ReflectionTestUtils.setField(user, "id", 1L);
 
-        notification = Notification.create(new NotificationCreateCommand(user, "\"테스트\" 프로젝트에 참가했습니다."));
+        notification = Notification.create(new NotificationCreateCommand(1L, "\"테스트\" 프로젝트에 참가했습니다."));
         ReflectionTestUtils.setField(notification, "id", 10L);
         ReflectionTestUtils.setField(notification, "createdAt", LocalDateTime.of(2026, 3, 29, 14, 30));
     }

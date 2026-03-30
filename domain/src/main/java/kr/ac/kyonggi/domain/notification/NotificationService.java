@@ -4,7 +4,7 @@ import java.util.List;
 
 public interface NotificationService {
 
-    Notification create(Notification notification);
+    void create(Notification notification);
 
     List<Notification> getByUserId(Long userId);
 
