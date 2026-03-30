@@ -112,6 +112,22 @@ class AuthControllerTest {
                 .extractingPath("$.email").asString().isEqualTo(EMAIL);
     }
 
+    @Test
+    @WithAnonymousUser
+    @DisplayName("로그아웃 - 미인증 사용자도 204 반환")
+    void logout_unauthenticated() {
+        assertThat(mockMvc.post().uri("/api/auth/logout"))
+                .hasStatus(HttpStatus.NO_CONTENT);
+    }
+
+    @Test
+    @WithMockUser(username = "test@test.com")
+    @DisplayName("로그아웃 - 인증된 사용자 204 반환")
+    void logout_authenticated() {
+        assertThat(mockMvc.post().uri("/api/auth/logout"))
+                .hasStatus(HttpStatus.NO_CONTENT);
+    }
+
     private String toJson(Object obj) throws JsonProcessingException {
         return objectMapper.writeValueAsString(obj);
     }
