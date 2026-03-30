@@ -38,3 +38,6 @@ out/
 # Docker Data
 docker/mysql/data/
 docker/redis/data/
+
+### Claude Code ###
+.claude/settings.local.json
