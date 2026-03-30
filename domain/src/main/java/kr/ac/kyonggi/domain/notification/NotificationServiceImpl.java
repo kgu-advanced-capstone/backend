@@ -2,15 +2,11 @@ package kr.ac.kyonggi.domain.notification;
 
 import kr.ac.kyonggi.common.exception.NotificationNotFoundException;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -18,15 +14,10 @@ public class NotificationServiceImpl implements NotificationService {
 
     private final NotificationRepository notificationRepository;
 
-    @Async
     @Override
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional
     public void create(Notification notification) {
-        try {
-            notificationRepository.save(notification);
-        } catch (Exception e) {
-            log.error("알림 생성 실패: {}", e.getMessage(), e);
-        }
+        notificationRepository.save(notification);
     }
 
     @Override

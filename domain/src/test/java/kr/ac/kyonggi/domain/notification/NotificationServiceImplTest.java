@@ -1,8 +1,6 @@
 package kr.ac.kyonggi.domain.notification;
 
 import kr.ac.kyonggi.common.exception.NotificationNotFoundException;
-import kr.ac.kyonggi.domain.user.User;
-import kr.ac.kyonggi.domain.user.UserCreateCommand;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,7 +15,6 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
@@ -30,15 +27,11 @@ class NotificationServiceImplTest {
     @InjectMocks
     private NotificationServiceImpl notificationService;
 
-    private User user;
     private Notification notification;
 
     @BeforeEach
     void setUp() {
-        user = User.create(new UserCreateCommand("test@test.com", "pw", "홍길동", null));
-        ReflectionTestUtils.setField(user, "id", 1L);
-
-        notification = Notification.create(new NotificationCreateCommand(user, "\"테스트\" 프로젝트에 참가했습니다."));
+        notification = Notification.create(new NotificationCreateCommand(1L, "\"테스트\" 프로젝트에 참가했습니다."));
         ReflectionTestUtils.setField(notification, "id", 10L);
     }
 
@@ -122,7 +115,7 @@ class NotificationServiceImplTest {
     @Test
     @DisplayName("markAllAsRead()는 userId의 모든 알림을 읽음 처리한다")
     void markAllAsRead_marksAllNotificationsAsRead() {
-        Notification other = Notification.create(new NotificationCreateCommand(user, "다른 알림"));
+        Notification other = Notification.create(new NotificationCreateCommand(1L, "다른 알림"));
         given(notificationRepository.findByUserIdOrderByCreatedAtDesc(1L))
                 .willReturn(List.of(notification, other));
 
