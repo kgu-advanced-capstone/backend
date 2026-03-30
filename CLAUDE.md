@@ -106,3 +106,81 @@ When adding new code, follow these rules:
 - Facade services (DTO 변환, 여러 domain/infra 조합) → `api/service/`
 - Custom exceptions → `common/exception/` (BusinessException 상속)
 - Querydsl 구현체, Redis/Kafka 설정 → `infrastructure/`
+
+## Language
+
+- 모든 커밋 메시지, PR 제목/본문, 코드 주석은 **한국어**로 작성한다.
+- CLAUDE.md, 설정 파일 등 프로젝트 문서도 한국어를 기본으로 한다.
+
+## Git Convention
+
+### Branch Strategy (Git Flow)
+
+- `main` — 프로덕션 배포 브랜치. 직접 커밋하지 않는다.
+- `develop` — 개발 통합 브랜치. 모든 작업 브랜치는 여기서 분기하고 여기로 PR을 올린다.
+- 작업 브랜치는 반드시 `develop`에서 새로 생성한다.
+
+| Prefix | 용도 | 예시 |
+|---|---|---|
+| `feat/` 또는 `feature/` | 새 기능 개발 | `feat/logout` |
+| `fix/` | 버그 수정 | `fix/session-expiry` |
+| `chore/` | CI, 설정, 문서 등 비기능 작업 | `chore/pr-test` |
+| `refactor/` | 리팩토링 | `refactor/auth-service` |
+
+### 작업 흐름
+
+```
+1. develop 브랜치에서 새 브랜치 생성
+   git checkout develop && git pull origin develop
+   git checkout -b feat/기능명
+
+2. 작업 후 커밋 & 푸시
+   git add <파일> && git commit -m "feat: 설명"
+   git push origin feat/기능명
+
+3. GitHub에서 develop 대상으로 PR 생성
+
+4. 리뷰 & 머지 후, 릴리스 시점에 develop → main 머지
+```
+
+**주의사항:**
+- 현재 작업 중인 브랜치에 관계없는 변경을 커밋하지 않는다. 별도 작업은 항상 develop에서 새 브랜치를 만들어서 진행한다.
+- 하나의 브랜치에는 하나의 주제만 담는다.
+
+### Commit Message
+
+Conventional Commits 형식을 따른다:
+
+```
+<type>: <한국어 설명>
+```
+
+| Type | 용도 |
+|---|---|
+| `feat` | 새 기능 추가 |
+| `fix` | 버그 수정 |
+| `chore` | CI, 설정, 빌드 등 비기능 변경 |
+| `refactor` | 리팩토링 (기능 변경 없음) |
+| `test` | 테스트 추가/수정 |
+| `docs` | 문서 변경 |
+
+- 커밋 메시지의 type은 브랜치 prefix와 일치시킨다 (예: `feat/` 브랜치 → `feat:` 커밋).
+- `Co-Authored-By` 트레일러를 추가하지 않는다.
+
+### PR
+
+- 모든 PR의 base 브랜치는 `develop`이다 (`main`이 아님).
+- `develop` → `main` 머지는 릴리스 시점에만 수행한다.
+
+## 코드 작성 절차 (TDD)
+
+새 기능 개발 및 버그 수정 시 아래 순서를 따른다:
+
+```
+1. 테스트 작성 — 구현 전에 실패하는 테스트를 먼저 작성한다.
+2. 테스트 실패 확인 — ./gradlew test 로 테스트가 실패하는지 확인한다.
+3. 구현 — 테스트를 통과시키기 위한 최소한의 코드를 작성한다.
+4. 테스트 성공 확인 — ./gradlew test 로 모든 테스트가 통과하는지 확인한다.
+5. 커밋 & 푸시 — 테스트 통과 후 커밋하고 푸시한다.
+6. PR 생성 — develop 대상으로 PR을 올린다.
+```
