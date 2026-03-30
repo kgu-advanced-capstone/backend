@@ -45,13 +45,10 @@ class NotificationServiceImplTest {
     // ── create() ─────────────────────────────────────────────────────
 
     @Test
-    @DisplayName("create()는 repository.save()를 호출하고 저장된 알림을 반환한다")
-    void create_savesAndReturnsNotification() {
-        given(notificationRepository.save(notification)).willReturn(notification);
+    @DisplayName("create()는 repository.save()를 호출하여 알림을 저장한다")
+    void create_savesNotification() {
+        notificationService.create(notification);
 
-        Notification result = notificationService.create(notification);
-
-        assertThat(result).isSameAs(notification);
         verify(notificationRepository).save(notification);
     }
 
