@@ -3,7 +3,7 @@ jar.enabled=true
 
 dependencies {
     implementation project(':domain')
-    implementation 'org.springframework.ai:spring-ai-starter-model-openai:1.0.0'
+    implementation 'org.springframework.ai:spring-ai-starter-model-openai'
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
     implementation 'io.micrometer:micrometer-core'
     implementation 'com.querydsl:querydsl-jpa:5.0.0:jakarta'

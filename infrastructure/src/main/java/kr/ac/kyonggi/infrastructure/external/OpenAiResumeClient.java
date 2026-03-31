@@ -52,7 +52,7 @@ public class OpenAiResumeClient implements ResumeAiClient {
                 title,
                 description != null ? description : "",
                 category,
-                String.join(", ", skills),
+                skills != null ? String.join(", ", skills) : "",
                 experienceContent != null ? experienceContent : ""
         );
     }

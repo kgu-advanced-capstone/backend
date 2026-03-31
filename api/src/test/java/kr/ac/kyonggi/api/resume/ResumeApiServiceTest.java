@@ -108,7 +108,7 @@ class ResumeApiServiceTest {
 
     @Test
     @DisplayName("generate()는 경험 기록이 있으면 content를 포함하여 AI를 호출한다")
-    void generate_passesExperienceContent_toGemini_whenExists() {
+    void generate_passesExperienceContent_toAiClient_whenExists() {
         Experience experience = Experience.create(
                 new ExperienceCreateCommand(USER_ID, PROJECT_ID, "로그인 기능을 구현했습니다."));
 
@@ -136,7 +136,7 @@ class ResumeApiServiceTest {
 
     @Test
     @DisplayName("generate()는 경험 기록이 없으면 content를 null로 AI를 호출한다")
-    void generate_passesNullContent_toGemini_whenNoExperience() {
+    void generate_passesNullContent_toAiClient_whenNoExperience() {
         given(userService.getByEmail(EMAIL)).willReturn(user);
         given(projectService.getMembershipsOf(USER_ID)).willReturn(List.of(member));
         given(projectService.getAllByIds(List.of(PROJECT_ID))).willReturn(List.of(project));
