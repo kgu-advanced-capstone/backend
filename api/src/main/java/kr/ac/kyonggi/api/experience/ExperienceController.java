@@ -15,7 +15,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/experiences")
 @RequiredArgsConstructor
-public class ExperienceController {
+public class ExperienceController implements ExperienceApi {
 
     private final ExperienceApiService experienceApiService;
 
