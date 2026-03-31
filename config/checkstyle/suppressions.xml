@@ -5,7 +5,7 @@
 
 <suppressions>
     <!-- 테스트 파일: 와일드카드 import 허용 (import static org.mockito.Mockito.* 등) -->
-    <suppress checks="AvoidStarImport" files=".*Test\.java$"/>
+    <suppress checks="AvoidStarImport" files=".*Tests?\.java$"/>
     <!-- 테스트 파일: 라인 길이 완화 -->
-    <suppress checks="LineLength" files=".*Test\.java$"/>
+    <suppress checks="LineLength" files=".*Tests?\.java$"/>
 </suppressions>
