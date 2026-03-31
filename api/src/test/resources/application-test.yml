@@ -14,6 +14,10 @@ spring:
         format_sql: true
         dialect: org.hibernate.dialect.H2Dialect
 
+  ai:
+    openai:
+      api-key: test-key
+
   autoconfigure:
     exclude:
       - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
