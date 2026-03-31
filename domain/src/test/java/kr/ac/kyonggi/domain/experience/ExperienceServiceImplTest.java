@@ -1,10 +1,6 @@
 package kr.ac.kyonggi.domain.experience;
 
 import kr.ac.kyonggi.common.exception.ExperienceNotFoundException;
-import kr.ac.kyonggi.domain.project.Project;
-import kr.ac.kyonggi.domain.project.ProjectCreateCommand;
-import kr.ac.kyonggi.domain.user.User;
-import kr.ac.kyonggi.domain.user.UserCreateCommand;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,7 +10,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -32,22 +27,11 @@ class ExperienceServiceImplTest {
     @InjectMocks
     private ExperienceServiceImpl experienceService;
 
-    private User user;
-    private Project project;
     private Experience experience;
 
     @BeforeEach
     void setUp() {
-        user = User.create(new UserCreateCommand("test@test.com", "pw", "홍길동", null));
-        ReflectionTestUtils.setField(user, "id", 1L);
-
-        project = Project.create(new ProjectCreateCommand(
-                "테스트 프로젝트", "설명", "백엔드", List.of("Java"), 4,
-                LocalDate.of(2026, 12, 31), user
-        ));
-        ReflectionTestUtils.setField(project, "id", 10L);
-
-        experience = Experience.create(new ExperienceCreateCommand(user, project, "개발 내용입니다."));
+        experience = Experience.create(new ExperienceCreateCommand(1L, 10L, "개발 내용입니다."));
         ReflectionTestUtils.setField(experience, "id", 5L);
     }
 

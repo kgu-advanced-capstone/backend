@@ -3,9 +3,6 @@ package kr.ac.kyonggi.domain.project;
 import kr.ac.kyonggi.common.exception.AlreadyAppliedException;
 import kr.ac.kyonggi.common.exception.ForbiddenException;
 import kr.ac.kyonggi.common.exception.ProjectNotFoundException;
-import kr.ac.kyonggi.domain.user.User;
-import kr.ac.kyonggi.domain.user.UserCreateCommand;
-import kr.ac.kyonggi.domain.user.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -38,27 +35,16 @@ class ProjectServiceImplTest {
     @Mock
     private ProjectMemberRepository projectMemberRepository;
 
-    @Mock
-    private UserService userService;
-
     @InjectMocks
     private ProjectServiceImpl projectService;
 
-    private User author;
-    private User other;
     private Project project;
 
     @BeforeEach
     void setUp() {
-        author = User.create(new UserCreateCommand("author@test.com", "pw", "작성자", null));
-        ReflectionTestUtils.setField(author, "id", 1L);
-
-        other = User.create(new UserCreateCommand("other@test.com", "pw", "타인", null));
-        ReflectionTestUtils.setField(other, "id", 2L);
-
         project = Project.create(new ProjectCreateCommand(
                 "테스트 프로젝트", "설명", "백엔드", List.of("Java"), 4,
-                LocalDate.of(2026, 12, 31), author
+                LocalDate.of(2026, 12, 31), 1L
         ));
         ReflectionTestUtils.setField(project, "id", 10L);
     }
@@ -126,16 +112,14 @@ class ProjectServiceImplTest {
     @DisplayName("apply()는 신규 신청 시 ProjectMember를 생성하고 반환한다")
     void apply_newApplication_returnsProjectMember() {
         given(projectMemberRepository.existsByProjectIdAndUserId(10L, 2L)).willReturn(false);
-        given(projectRepository.findById(10L)).willReturn(Optional.of(project));
-        given(userService.getById(2L)).willReturn(other);
 
-        ProjectMember saved = ProjectMember.of(new ProjectMemberCreateCommand(project, other));
+        ProjectMember saved = ProjectMember.of(new ProjectMemberCreateCommand(10L, 2L));
         given(projectMemberRepository.save(any(ProjectMember.class))).willReturn(saved);
 
         ProjectMember result = projectService.apply(10L, 2L);
 
-        assertThat(result.getProject()).isSameAs(project);
-        assertThat(result.getUser()).isSameAs(other);
+        assertThat(result.getProjectId()).isEqualTo(10L);
+        assertThat(result.getUserId()).isEqualTo(2L);
         verify(projectMemberRepository).save(any(ProjectMember.class));
     }
 
@@ -146,7 +130,7 @@ class ProjectServiceImplTest {
     void updateStatus_notAuthor_throwsForbiddenException() {
         given(projectRepository.findById(10L)).willReturn(Optional.of(project));
 
-        assertThatThrownBy(() -> projectService.updateStatus(10L, other.getId(), ProjectStatus.IN_PROGRESS))
+        assertThatThrownBy(() -> projectService.updateStatus(10L, 99L, ProjectStatus.IN_PROGRESS))
                 .isInstanceOf(ForbiddenException.class);
     }
 
@@ -155,7 +139,7 @@ class ProjectServiceImplTest {
     void updateStatus_asAuthor_updatesStatus() {
         given(projectRepository.findById(10L)).willReturn(Optional.of(project));
 
-        projectService.updateStatus(10L, author.getId(), ProjectStatus.IN_PROGRESS);
+        projectService.updateStatus(10L, 1L, ProjectStatus.IN_PROGRESS);
 
         assertThat(project.getStatus()).isEqualTo(ProjectStatus.IN_PROGRESS);
     }
@@ -177,12 +161,12 @@ class ProjectServiceImplTest {
     @Test
     @DisplayName("getMembershipsOf()는 유저의 ProjectMember 목록을 반환한다")
     void getMembershipsOf_returnsUserMemberships() {
-        ProjectMember member = ProjectMember.of(new ProjectMemberCreateCommand(project, author));
+        ProjectMember member = ProjectMember.of(new ProjectMemberCreateCommand(10L, 1L));
         given(projectMemberRepository.findByUserId(1L)).willReturn(List.of(member));
 
         List<ProjectMember> result = projectService.getMembershipsOf(1L);
 
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).getProject()).isSameAs(project);
+        assertThat(result.get(0).getProjectId()).isEqualTo(10L);
     }
 }

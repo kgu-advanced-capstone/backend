@@ -17,7 +17,7 @@ public record ProjectSummaryResponse(
         @JsonFormat(pattern = "yyyy-MM-dd")
         LocalDate createdAt
 ) {
-    public static ProjectSummaryResponse from(Project project, long memberCount) {
+    public static ProjectSummaryResponse from(Project project, long memberCount, String authorName) {
         return new ProjectSummaryResponse(
                 project.getId(),
                 project.getTitle(),
@@ -25,7 +25,7 @@ public record ProjectSummaryResponse(
                 project.getSkills(),
                 (int) memberCount,
                 project.getMaxMembers(),
-                project.getAuthor().getName(),
+                authorName,
                 project.getCreatedAt() != null ? project.getCreatedAt().toLocalDate() : null
         );
     }
