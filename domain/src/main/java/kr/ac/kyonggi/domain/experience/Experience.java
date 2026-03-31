@@ -1,8 +1,6 @@
 package kr.ac.kyonggi.domain.experience;
 
 import jakarta.persistence.*;
-import kr.ac.kyonggi.domain.project.Project;
-import kr.ac.kyonggi.domain.user.User;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -25,13 +23,11 @@ public class Experience {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "project_id", nullable = false)
-    private Project project;
+    @Column(name = "project_id", nullable = false)
+    private Long projectId;
 
     @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
@@ -48,8 +44,8 @@ public class Experience {
     }
 
     private Experience(ExperienceCreateCommand command) {
-        this.user = command.user();
-        this.project = command.project();
+        this.userId = command.userId();
+        this.projectId = command.projectId();
         this.content = command.content();
     }
 

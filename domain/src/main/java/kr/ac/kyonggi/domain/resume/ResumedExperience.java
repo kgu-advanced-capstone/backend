@@ -18,6 +18,9 @@ public class ResumedExperience {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
+    private Long resumeId;
+
     private Long projectId;
 
     private String projectTitle;
@@ -30,8 +33,9 @@ public class ResumedExperience {
     @Column(name = "key_point")
     private List<String> keyPoints = new ArrayList<>();
 
-    public static ResumedExperience of(Long projectId, String projectTitle, List<String> keyPoints) {
+    public static ResumedExperience of(Long resumeId, Long projectId, String projectTitle, List<String> keyPoints) {
         ResumedExperience experience = new ResumedExperience();
+        experience.resumeId = resumeId;
         experience.projectId = projectId;
         experience.projectTitle = projectTitle;
         experience.keyPoints = new ArrayList<>(keyPoints);

@@ -11,6 +11,8 @@ import kr.ac.kyonggi.domain.project.ProjectMember;
 import kr.ac.kyonggi.domain.project.ProjectMemberCreateCommand;
 import kr.ac.kyonggi.domain.project.ProjectService;
 import kr.ac.kyonggi.domain.resume.Resume;
+import kr.ac.kyonggi.domain.resume.ResumedExperience;
+import kr.ac.kyonggi.domain.resume.ResumedExperienceRepository;
 import kr.ac.kyonggi.domain.resume.ResumeService;
 import kr.ac.kyonggi.domain.user.User;
 import kr.ac.kyonggi.domain.user.UserCreateCommand;
@@ -29,6 +31,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -44,6 +47,7 @@ class ResumeApiServiceTest {
     @Mock private UserService userService;
     @Mock private ProjectService projectService;
     @Mock private ExperienceService experienceService;
+    @Mock private ResumedExperienceRepository resumedExperienceRepository;
     @Mock private GeminiResumeClient geminiClient;
 
     @InjectMocks
@@ -51,6 +55,7 @@ class ResumeApiServiceTest {
 
     private static final String EMAIL = "test@test.com";
     private static final Long USER_ID = 1L;
+    private static final Long PROJECT_ID = 10L;
 
     private User user;
     private Project project;
@@ -63,11 +68,11 @@ class ResumeApiServiceTest {
 
         project = Project.create(new ProjectCreateCommand(
                 "테스트 프로젝트", "프로젝트 설명", "백엔드", List.of("Java", "Spring"), 4,
-                LocalDate.of(2026, 12, 31), user
+                LocalDate.of(2026, 12, 31), USER_ID
         ));
-        ReflectionTestUtils.setField(project, "id", 10L);
+        ReflectionTestUtils.setField(project, "id", PROJECT_ID);
 
-        member = ProjectMember.of(new ProjectMemberCreateCommand(project, user));
+        member = ProjectMember.of(new ProjectMemberCreateCommand(PROJECT_ID, USER_ID));
     }
 
     // ── getResume() ────────────────────────────────────────────────────────────
@@ -86,11 +91,12 @@ class ResumeApiServiceTest {
     @DisplayName("getResume()는 이력서가 있으면 ResumeResponse를 반환한다")
     void getResume_returnsResumeResponse_whenExists() {
         Resume mockResume = mock(Resume.class);
-        when(mockResume.getExperiences()).thenReturn(List.of());
+        when(mockResume.getId()).thenReturn(1L);
         when(mockResume.getGeneratedAt()).thenReturn(LocalDateTime.now());
 
         given(userService.getByEmail(EMAIL)).willReturn(user);
         given(resumeService.findByUserId(USER_ID)).willReturn(Optional.of(mockResume));
+        given(resumedExperienceRepository.findByResumeId(1L)).willReturn(List.of());
 
         ResumeResponse result = resumeApiService.getResume(EMAIL);
 
@@ -104,15 +110,21 @@ class ResumeApiServiceTest {
     @DisplayName("generate()는 경험 기록이 있으면 content를 포함하여 Gemini를 호출한다")
     void generate_passesExperienceContent_toGemini_whenExists() {
         Experience experience = Experience.create(
-                new ExperienceCreateCommand(user, project, "로그인 기능을 구현했습니다."));
+                new ExperienceCreateCommand(USER_ID, PROJECT_ID, "로그인 기능을 구현했습니다."));
 
         given(userService.getByEmail(EMAIL)).willReturn(user);
         given(projectService.getMembershipsOf(USER_ID)).willReturn(List.of(member));
-        given(experienceService.findByProjectIdAndUserId(10L, USER_ID)).willReturn(Optional.of(experience));
+        given(projectService.getAllByIds(List.of(PROJECT_ID))).willReturn(List.of(project));
+        given(experienceService.findByProjectIdsAndUserId(List.of(PROJECT_ID), USER_ID))
+                .willReturn(Map.of(PROJECT_ID, experience));
         given(geminiClient.generateKeyPoints(any(), any(), any(), any(), any()))
                 .willReturn(List.of("키포인트1", "키포인트2"));
         given(resumeService.findByUserId(USER_ID)).willReturn(Optional.empty());
-        given(resumeService.save(any(Resume.class))).willAnswer(inv -> inv.getArgument(0));
+        given(resumeService.save(any(Resume.class))).willAnswer(inv -> {
+            Resume r = inv.getArgument(0);
+            ReflectionTestUtils.setField(r, "id", 1L);
+            return r;
+        });
 
         resumeApiService.generate(EMAIL);
 
@@ -127,11 +139,17 @@ class ResumeApiServiceTest {
     void generate_passesNullContent_toGemini_whenNoExperience() {
         given(userService.getByEmail(EMAIL)).willReturn(user);
         given(projectService.getMembershipsOf(USER_ID)).willReturn(List.of(member));
-        given(experienceService.findByProjectIdAndUserId(10L, USER_ID)).willReturn(Optional.empty());
+        given(projectService.getAllByIds(List.of(PROJECT_ID))).willReturn(List.of(project));
+        given(experienceService.findByProjectIdsAndUserId(List.of(PROJECT_ID), USER_ID))
+                .willReturn(Map.of());
         given(geminiClient.generateKeyPoints(any(), any(), any(), any(), any()))
                 .willReturn(List.of("키포인트1"));
         given(resumeService.findByUserId(USER_ID)).willReturn(Optional.empty());
-        given(resumeService.save(any(Resume.class))).willAnswer(inv -> inv.getArgument(0));
+        given(resumeService.save(any(Resume.class))).willAnswer(inv -> {
+            Resume r = inv.getArgument(0);
+            ReflectionTestUtils.setField(r, "id", 1L);
+            return r;
+        });
 
         resumeApiService.generate(EMAIL);
 
@@ -142,45 +160,52 @@ class ResumeApiServiceTest {
     }
 
     @Test
-    @DisplayName("generate()는 이력서가 없으면 새로 생성하고 저장한다")
+    @DisplayName("generate()는 이력서가 없으면 새로 생성하고 experiences를 별도로 저장한다")
     void generate_createsNewResume_whenNoExistingResume() {
         given(userService.getByEmail(EMAIL)).willReturn(user);
         given(projectService.getMembershipsOf(USER_ID)).willReturn(List.of(member));
-        given(experienceService.findByProjectIdAndUserId(10L, USER_ID)).willReturn(Optional.empty());
+        given(projectService.getAllByIds(List.of(PROJECT_ID))).willReturn(List.of(project));
+        given(experienceService.findByProjectIdsAndUserId(List.of(PROJECT_ID), USER_ID))
+                .willReturn(Map.of());
         given(geminiClient.generateKeyPoints(any(), any(), any(), any(), any()))
                 .willReturn(List.of("키포인트1", "키포인트2"));
         given(resumeService.findByUserId(USER_ID)).willReturn(Optional.empty());
-        given(resumeService.save(any(Resume.class))).willAnswer(inv -> inv.getArgument(0));
+        given(resumeService.save(any(Resume.class))).willAnswer(inv -> {
+            Resume r = inv.getArgument(0);
+            ReflectionTestUtils.setField(r, "id", 1L);
+            return r;
+        });
 
         resumeApiService.generate(EMAIL);
 
-        ArgumentCaptor<Resume> captor = ArgumentCaptor.forClass(Resume.class);
-        verify(resumeService).save(captor.capture());
-        Resume saved = captor.getValue();
-        assertThat(saved.getUserId()).isEqualTo(USER_ID);
-        assertThat(saved.getExperiences()).hasSize(1);
-        assertThat(saved.getExperiences().get(0).getProjectTitle()).isEqualTo("테스트 프로젝트");
-        assertThat(saved.getExperiences().get(0).getKeyPoints()).containsExactly("키포인트1", "키포인트2");
+        ArgumentCaptor<List<ResumedExperience>> captor = ArgumentCaptor.forClass(List.class);
+        verify(resumedExperienceRepository).saveAll(captor.capture());
+        List<ResumedExperience> saved = captor.getValue();
+        assertThat(saved).hasSize(1);
+        assertThat(saved.get(0).getProjectTitle()).isEqualTo("테스트 프로젝트");
+        assertThat(saved.get(0).getKeyPoints()).containsExactly("키포인트1", "키포인트2");
     }
 
     @Test
-    @DisplayName("generate()는 이력서가 이미 있으면 experiences를 갱신한다")
+    @DisplayName("generate()는 이력서가 이미 있으면 기존 experiences를 삭제하고 새로 저장한다")
     void generate_updatesExistingResume() {
         Resume existingResume = Resume.createFor(USER_ID);
+        ReflectionTestUtils.setField(existingResume, "id", 5L);
 
         given(userService.getByEmail(EMAIL)).willReturn(user);
         given(projectService.getMembershipsOf(USER_ID)).willReturn(List.of(member));
-        given(experienceService.findByProjectIdAndUserId(10L, USER_ID)).willReturn(Optional.empty());
+        given(projectService.getAllByIds(List.of(PROJECT_ID))).willReturn(List.of(project));
+        given(experienceService.findByProjectIdsAndUserId(List.of(PROJECT_ID), USER_ID))
+                .willReturn(Map.of());
         given(geminiClient.generateKeyPoints(any(), any(), any(), any(), any()))
                 .willReturn(List.of("새 키포인트"));
         given(resumeService.findByUserId(USER_ID)).willReturn(Optional.of(existingResume));
-        given(resumeService.save(any(Resume.class))).willAnswer(inv -> inv.getArgument(0));
+        given(resumeService.save(any(Resume.class))).willReturn(existingResume);
 
         resumeApiService.generate(EMAIL);
 
-        verify(resumeService).save(same(existingResume));
-        assertThat(existingResume.getExperiences()).hasSize(1);
-        assertThat(existingResume.getExperiences().get(0).getKeyPoints()).containsExactly("새 키포인트");
+        verify(resumedExperienceRepository).deleteByResumeId(5L);
+        verify(resumedExperienceRepository).saveAll(any());
     }
 
     @Test
@@ -189,13 +214,17 @@ class ResumeApiServiceTest {
         given(userService.getByEmail(EMAIL)).willReturn(user);
         given(projectService.getMembershipsOf(USER_ID)).willReturn(List.of());
         given(resumeService.findByUserId(USER_ID)).willReturn(Optional.empty());
-        given(resumeService.save(any(Resume.class))).willAnswer(inv -> inv.getArgument(0));
+        given(resumeService.save(any(Resume.class))).willAnswer(inv -> {
+            Resume r = inv.getArgument(0);
+            ReflectionTestUtils.setField(r, "id", 1L);
+            return r;
+        });
 
         resumeApiService.generate(EMAIL);
 
-        ArgumentCaptor<Resume> captor = ArgumentCaptor.forClass(Resume.class);
-        verify(resumeService).save(captor.capture());
-        assertThat(captor.getValue().getExperiences()).isEmpty();
+        ArgumentCaptor<List<ResumedExperience>> captor = ArgumentCaptor.forClass(List.class);
+        verify(resumedExperienceRepository).saveAll(captor.capture());
+        assertThat(captor.getValue()).isEmpty();
         verify(geminiClient, never()).generateKeyPoints(any(), any(), any(), any(), any());
     }
 }

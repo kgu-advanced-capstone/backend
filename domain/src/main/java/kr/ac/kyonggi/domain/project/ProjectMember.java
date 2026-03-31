@@ -1,7 +1,6 @@
 package kr.ac.kyonggi.domain.project;
 
 import jakarta.persistence.*;
-import kr.ac.kyonggi.domain.user.User;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -22,13 +21,11 @@ public class ProjectMember {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "project_id", nullable = false)
-    private Project project;
+    @Column(name = "project_id", nullable = false)
+    private Long projectId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
 
     @CreatedDate
     @Column(updatable = false)
@@ -39,7 +36,7 @@ public class ProjectMember {
     }
 
     private ProjectMember(ProjectMemberCreateCommand command) {
-        this.project = command.project();
-        this.user = command.user();
+        this.projectId = command.projectId();
+        this.userId = command.userId();
     }
 }

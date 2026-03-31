@@ -3,8 +3,6 @@ package kr.ac.kyonggi.domain.project;
 import kr.ac.kyonggi.common.exception.AlreadyAppliedException;
 import kr.ac.kyonggi.common.exception.ForbiddenException;
 import kr.ac.kyonggi.common.exception.ProjectNotFoundException;
-import kr.ac.kyonggi.domain.user.User;
-import kr.ac.kyonggi.domain.user.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -12,6 +10,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -20,7 +20,6 @@ public class ProjectServiceImpl implements ProjectService {
 
     private final ProjectRepository projectRepository;
     private final ProjectMemberRepository projectMemberRepository;
-    private final UserService userService;
 
     @Override
     @Transactional
@@ -46,11 +45,7 @@ public class ProjectServiceImpl implements ProjectService {
             throw new AlreadyAppliedException("이미 참가 신청한 프로젝트입니다.");
         }
 
-        Project project = getById(projectId);
-        User user = userService.getById(userId);
-
-        ProjectMember projectMember = ProjectMember.of(new ProjectMemberCreateCommand(project, user));
-
+        ProjectMember projectMember = ProjectMember.of(new ProjectMemberCreateCommand(projectId, userId));
         return projectMemberRepository.save(projectMember);
     }
 
@@ -74,5 +69,16 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     public List<ProjectMember> getMembershipsOf(Long userId) {
         return projectMemberRepository.findByUserId(userId);
+    }
+
+    @Override
+    public List<Project> getAllByIds(List<Long> ids) {
+        return projectRepository.findAllById(ids);
+    }
+
+    @Override
+    public Map<Long, Long> getMemberCounts(List<Long> projectIds) {
+        return projectMemberRepository.findByProjectIdIn(projectIds).stream()
+                .collect(Collectors.groupingBy(ProjectMember::getProjectId, Collectors.counting()));
     }
 }

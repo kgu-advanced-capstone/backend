@@ -1,7 +1,6 @@
 package kr.ac.kyonggi.domain.notification;
 
 import jakarta.persistence.*;
-import kr.ac.kyonggi.domain.user.User;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -21,9 +20,8 @@ public class Notification {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
 
     @Column(nullable = false)
     private String message;
@@ -40,7 +38,7 @@ public class Notification {
     }
 
     private Notification(NotificationCreateCommand command) {
-        this.user = command.user();
+        this.userId = command.userId();
         this.message = command.message();
         this.isRead = false;
     }

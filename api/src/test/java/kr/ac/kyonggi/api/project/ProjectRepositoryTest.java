@@ -47,7 +47,7 @@ class ProjectRepositoryTest {
                 List.of("Java", "Spring"),
                 4,
                 LocalDate.of(2026, 12, 31),
-                author
+                author.getId()
         ));
         Project saved = em.persist(project);
         em.flush();
