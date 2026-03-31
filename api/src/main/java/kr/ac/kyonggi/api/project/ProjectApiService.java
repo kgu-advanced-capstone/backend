@@ -14,7 +14,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -70,7 +69,7 @@ public class ProjectApiService {
         return ProjectDetailResponse.from(saved, projectService.getMemberCount(saved.getId()), author.getName());
     }
 
-    @Transactional(isolation = Isolation.READ_COMMITTED)
+    @Transactional
     public void applyProject(Long projectId, String userEmail) {
         User user = userService.getByEmail(userEmail);
 
