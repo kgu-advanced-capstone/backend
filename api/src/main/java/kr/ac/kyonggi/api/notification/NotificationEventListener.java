@@ -23,7 +23,8 @@ public class NotificationEventListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handle(NotificationCreatedEvent event) {
         try {
-            Notification notification = Notification.create(new NotificationCreateCommand(event.userId(), event.message()));
+            Notification notification = Notification.create(
+                    new NotificationCreateCommand(event.userId(), event.message()));
             notificationService.create(notification);
         } catch (DataAccessException e) {
             log.error("알림 생성 실패: userId={}, message={}", event.userId(), event.message(), e);

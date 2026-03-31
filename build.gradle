@@ -45,4 +45,19 @@ subprojects {
     test {
         useJUnitPlatform()
     }
+
+    apply plugin: 'checkstyle'
+
+    checkstyle {
+        toolVersion = '10.20.0'
+        configFile = rootProject.file('config/checkstyle/checkstyle.xml')
+        maxWarnings = 0
+    }
+
+    tasks.withType(Checkstyle).configureEach {
+        reports {
+            html.required = true
+            xml.required = false
+        }
+    }
 }

@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<!DOCTYPE suppressions PUBLIC
+        "-//Checkstyle//DTD SuppressionFilter Configuration 1.2//EN"
+        "https://checkstyle.org/dtds/suppressions_1_2.dtd">
+
+<suppressions>
+    <!-- 테스트 파일: 와일드카드 import 허용 (import static org.mockito.Mockito.* 등) -->
+    <suppress checks="AvoidStarImport" files=".*Test\.java$"/>
+    <!-- 테스트 파일: 라인 길이 완화 -->
+    <suppress checks="LineLength" files=".*Test\.java$"/>
+</suppressions>

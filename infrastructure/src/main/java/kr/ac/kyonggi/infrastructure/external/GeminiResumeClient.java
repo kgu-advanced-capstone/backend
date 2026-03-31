@@ -29,7 +29,9 @@ public class GeminiResumeClient {
 
     private final ObjectMapper objectMapper;
 
-    public List<String> generateKeyPoints(String title, String description, String category, List<String> skills, String experienceContent) {
+    public List<String> generateKeyPoints(
+            String title, String description, String category,
+            List<String> skills, String experienceContent) {
         if (apiKey == null || apiKey.isBlank()) {
             log.warn("Gemini API key is not configured. Returning empty key points.");
             return List.of();
@@ -50,7 +52,9 @@ public class GeminiResumeClient {
         }
     }
 
-    private String buildRequestBody(String title, String description, String category, List<String> skills, String experienceContent) {
+    private String buildRequestBody(
+            String title, String description, String category,
+            List<String> skills, String experienceContent) {
         String prompt = String.format("""
                 다음 프로젝트 정보와 참여자의 경험 기록을 바탕으로, 이력서에 기재할 핵심 성과 포인트 2~3개를 한국어로 작성해주세요.
                 프로젝트명: %s
