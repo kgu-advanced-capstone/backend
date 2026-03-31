@@ -43,13 +43,13 @@ class ProjectMemberRepositoryTest {
         user2 = em.persist(User.create(new UserCreateCommand("user2@test.com", "pw", "유저2", null)));
         project = em.persist(Project.create(new ProjectCreateCommand(
                 "테스트 프로젝트", "설명", "백엔드",
-                List.of("Java"), 4, LocalDate.of(2026, 12, 31), user1
+                List.of("Java"), 4, LocalDate.of(2026, 12, 31), user1.getId()
         )));
         em.flush();
     }
 
     private ProjectMember addMember(Project p, User u) {
-        ProjectMember member = ProjectMember.of(new ProjectMemberCreateCommand(p, u));
+        ProjectMember member = ProjectMember.of(new ProjectMemberCreateCommand(p.getId(), u.getId()));
         ProjectMember saved = em.persist(member);
         em.flush();
         return saved;
@@ -89,7 +89,7 @@ class ProjectMemberRepositoryTest {
     void findByUserId_returnsUserMemberships() {
         Project project2 = em.persist(Project.create(new ProjectCreateCommand(
                 "두 번째 프로젝트", "설명", "프론트엔드",
-                List.of("React"), 3, LocalDate.of(2026, 12, 31), user2
+                List.of("React"), 3, LocalDate.of(2026, 12, 31), user2.getId()
         )));
         em.flush();
 
@@ -99,6 +99,6 @@ class ProjectMemberRepositoryTest {
         List<ProjectMember> memberships = projectMemberRepository.findByUserId(user1.getId());
 
         assertThat(memberships).hasSize(2);
-        assertThat(memberships).extracting(m -> m.getUser().getId()).containsOnly(user1.getId());
+        assertThat(memberships).extracting(ProjectMember::getUserId).containsOnly(user1.getId());
     }
 }

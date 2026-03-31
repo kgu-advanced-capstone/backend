@@ -1,7 +1,6 @@
 package kr.ac.kyonggi.domain.project;
 
 import jakarta.persistence.*;
-import kr.ac.kyonggi.domain.user.User;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -47,9 +46,8 @@ public class Project {
     @Column(nullable = false)
     private ProjectStatus status;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "author_id", nullable = false)
-    private User author;
+    @Column(name = "author_id", nullable = false)
+    private Long authorId;
 
     @CreatedDate
     @Column(updatable = false)
@@ -67,7 +65,7 @@ public class Project {
         this.maxMembers = command.maxMembers();
         this.deadline = command.deadline();
         this.status = ProjectStatus.RECRUITING;
-        this.author = command.author();
+        this.authorId = command.authorId();
     }
 
     public void updateStatus(ProjectStatus status) {
@@ -75,6 +73,6 @@ public class Project {
     }
 
     public boolean isAuthor(Long userId) {
-        return author.getId().equals(userId);
+        return authorId.equals(userId);
     }
 }

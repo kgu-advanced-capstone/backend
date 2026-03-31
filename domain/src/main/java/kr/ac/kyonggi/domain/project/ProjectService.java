@@ -4,6 +4,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
+import java.util.Map;
 
 public interface ProjectService {
 
@@ -20,4 +21,8 @@ public interface ProjectService {
     long getMemberCount(Long projectId);
 
     List<ProjectMember> getMembershipsOf(Long userId);
+
+    List<Project> getAllByIds(List<Long> ids);
+
+    Map<Long, Long> getMemberCounts(List<Long> projectIds);
 }
