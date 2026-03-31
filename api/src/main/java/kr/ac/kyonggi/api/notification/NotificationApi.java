@@ -29,7 +29,8 @@ public interface NotificationApi {
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "조회 성공",
-                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = NotificationResponse.class)))),
+                    content = @Content(array = @ArraySchema(
+                            schema = @Schema(implementation = NotificationResponse.class)))),
             @ApiResponse(responseCode = "401", description = "인증 필요", content = @Content)
     })
     @GetMapping
