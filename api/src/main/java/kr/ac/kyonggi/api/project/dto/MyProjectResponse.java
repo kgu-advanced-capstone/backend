@@ -2,6 +2,7 @@ package kr.ac.kyonggi.api.project.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
+import kr.ac.kyonggi.domain.project.Project;
 import kr.ac.kyonggi.domain.project.ProjectMember;
 import kr.ac.kyonggi.domain.project.ProjectStatus;
 
@@ -21,12 +22,12 @@ public record MyProjectResponse(
         @Schema(description = "프로젝트 생성자 여부", example = "true")
         boolean isOwner
 ) {
-    public static MyProjectResponse from(ProjectMember member, Long currentUserId, long memberCount) {
+    public static MyProjectResponse from(Project project, ProjectMember member, Long currentUserId, long memberCount, String authorName) {
         return new MyProjectResponse(
-                ProjectDetailResponse.from(member.getProject(), memberCount),
+                ProjectDetailResponse.from(project, memberCount, authorName),
                 member.getJoinedAt() != null ? member.getJoinedAt().toLocalDate() : null,
-                member.getProject().getStatus(),
-                member.getProject().isAuthor(currentUserId)
+                project.getStatus(),
+                project.isAuthor(currentUserId)
         );
     }
 }

@@ -37,7 +37,7 @@ public record ProjectSummaryResponse(
         @Schema(description = "프로젝트 생성일 (yyyy-MM-dd)", example = "2026-03-01", type = "string")
         LocalDate createdAt
 ) {
-    public static ProjectSummaryResponse from(Project project, long memberCount) {
+    public static ProjectSummaryResponse from(Project project, long memberCount, String authorName) {
         return new ProjectSummaryResponse(
                 project.getId(),
                 project.getTitle(),
@@ -45,7 +45,7 @@ public record ProjectSummaryResponse(
                 project.getSkills(),
                 (int) memberCount,
                 project.getMaxMembers(),
-                project.getAuthor().getName(),
+                authorName,
                 project.getCreatedAt() != null ? project.getCreatedAt().toLocalDate() : null
         );
     }

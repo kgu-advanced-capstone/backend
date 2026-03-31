@@ -7,10 +7,7 @@ import kr.ac.kyonggi.common.exception.ForbiddenException;
 import kr.ac.kyonggi.domain.experience.Experience;
 import kr.ac.kyonggi.domain.experience.ExperienceCreateCommand;
 import kr.ac.kyonggi.domain.experience.ExperienceService;
-import kr.ac.kyonggi.domain.project.Project;
-import kr.ac.kyonggi.domain.project.ProjectCreateCommand;
 import kr.ac.kyonggi.domain.project.ProjectMemberRepository;
-import kr.ac.kyonggi.domain.project.ProjectService;
 import kr.ac.kyonggi.domain.user.User;
 import kr.ac.kyonggi.domain.user.UserCreateCommand;
 import kr.ac.kyonggi.domain.user.UserService;
@@ -24,7 +21,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -40,7 +36,6 @@ class ExperienceApiServiceTest {
 
     @Mock private ExperienceService experienceService;
     @Mock private UserService userService;
-    @Mock private ProjectService projectService;
     @Mock private ProjectMemberRepository projectMemberRepository;
     @Mock private ExperienceSummarizer experienceSummarizer;
 
@@ -52,7 +47,6 @@ class ExperienceApiServiceTest {
     private static final Long PROJECT_ID = 10L;
 
     private User user;
-    private Project project;
     private Experience experience;
 
     @BeforeEach
@@ -60,13 +54,7 @@ class ExperienceApiServiceTest {
         user = User.create(new UserCreateCommand(EMAIL, "pw", "홍길동", null));
         ReflectionTestUtils.setField(user, "id", USER_ID);
 
-        project = Project.create(new ProjectCreateCommand(
-                "테스트 프로젝트", "설명", "백엔드", List.of("Java", "Spring"), 4,
-                LocalDate.of(2026, 12, 31), user
-        ));
-        ReflectionTestUtils.setField(project, "id", PROJECT_ID);
-
-        experience = Experience.create(new ExperienceCreateCommand(user, project, "로그인 기능을 구현했습니다."));
+        experience = Experience.create(new ExperienceCreateCommand(USER_ID, PROJECT_ID, "로그인 기능을 구현했습니다."));
         ReflectionTestUtils.setField(experience, "id", 100L);
     }
 
@@ -106,7 +94,6 @@ class ExperienceApiServiceTest {
         given(userService.getByEmail(EMAIL)).willReturn(user);
         given(projectMemberRepository.existsByProjectIdAndUserId(PROJECT_ID, USER_ID)).willReturn(true);
         given(experienceService.findByProjectIdAndUserId(PROJECT_ID, USER_ID)).willReturn(Optional.empty());
-        given(projectService.getById(PROJECT_ID)).willReturn(project);
         given(experienceService.save(any(Experience.class))).willAnswer(inv -> inv.getArgument(0));
 
         ExperienceResponse result = experienceApiService.upsert(PROJECT_ID, request, EMAIL);
@@ -127,7 +114,6 @@ class ExperienceApiServiceTest {
         ExperienceResponse result = experienceApiService.upsert(PROJECT_ID, request, EMAIL);
 
         assertThat(result.content()).isEqualTo("수정된 경험 내용");
-        verify(projectService, never()).getById(any());
     }
 
     @Test

@@ -6,7 +6,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -37,5 +39,11 @@ public class ExperienceServiceImpl implements ExperienceService {
     @Transactional
     public Experience save(Experience experience) {
         return experienceRepository.save(experience);
+    }
+
+    @Override
+    public Map<Long, Experience> findByProjectIdsAndUserId(List<Long> projectIds, Long userId) {
+        return experienceRepository.findByProjectIdInAndUserId(projectIds, userId).stream()
+                .collect(Collectors.toMap(Experience::getProjectId, e -> e));
     }
 }

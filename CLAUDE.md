@@ -107,6 +107,41 @@ When adding new code, follow these rules:
 - Custom exceptions → `common/exception/` (BusinessException 상속)
 - Querydsl 구현체, Redis/Kafka 설정 → `infrastructure/`
 
+## DB 스키마 관리
+
+```
+db/
+├── ddl.sql              ← 베이스 스키마 (전체 테이블 DROP & CREATE)
+├── new-migration.sh     ← 마이그레이션 파일 생성 스크립트
+└── migrations/          ← 증분 변경 SQL 모음
+    └── V{YYYYMMDDHHmmss}.sql
+```
+
+### 규칙
+
+- `db/ddl.sql`은 직접 수정하지 않는다. 스키마 변경은 반드시 마이그레이션 파일로 작성한다.
+- 엔티티(`@Column`, `@Table` 등)를 변경할 때는 대응하는 마이그레이션 파일을 함께 추가한다.
+
+### 마이그레이션 파일 생성
+
+```bash
+bash db/new-migration.sh
+```
+
+스크립트 실행 시 당시 일시(초 단위)가 파일명에 자동 부여된 파일이 생성된다.
+변경 내용은 파일명이 아닌 파일 내부 주석으로 작성한다.
+
+### 네이밍 규칙
+
+`V{YYYYMMDDHHmmss}.sql`
+
+| 부분 | 설명 | 예시 |
+|---|---|---|
+| `V` | 버전 prefix | 고정 |
+| `YYYYMMDDHHmmss` | 생성 일시 (초 단위) | `20260331143000` |
+
+예시: `V20260331143000.sql`
+
 ## Language
 
 - 모든 커밋 메시지, PR 제목/본문, 코드 주석은 **한국어**로 작성한다.

@@ -1,11 +1,7 @@
 package kr.ac.kyonggi.domain.project;
 
-import kr.ac.kyonggi.domain.user.User;
-import kr.ac.kyonggi.domain.user.UserCreateCommand;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -13,14 +9,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class ProjectTest {
-
-    private User author;
-
-    @BeforeEach
-    void setUp() {
-        author = User.create(new UserCreateCommand("author@test.com", "pw", "작성자", null));
-        ReflectionTestUtils.setField(author, "id", 1L);
-    }
 
     private ProjectCreateCommand defaultCommand() {
         return new ProjectCreateCommand(
@@ -30,7 +18,7 @@ class ProjectTest {
                 List.of("Java", "Spring"),
                 4,
                 LocalDate.of(2026, 12, 31),
-                author
+                1L
         );
     }
 

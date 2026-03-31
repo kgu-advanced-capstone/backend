@@ -7,9 +7,7 @@ import kr.ac.kyonggi.common.exception.ForbiddenException;
 import kr.ac.kyonggi.domain.experience.Experience;
 import kr.ac.kyonggi.domain.experience.ExperienceCreateCommand;
 import kr.ac.kyonggi.domain.experience.ExperienceService;
-import kr.ac.kyonggi.domain.project.Project;
 import kr.ac.kyonggi.domain.project.ProjectMemberRepository;
-import kr.ac.kyonggi.domain.project.ProjectService;
 import kr.ac.kyonggi.domain.user.User;
 import kr.ac.kyonggi.domain.user.UserService;
 import kr.ac.kyonggi.infrastructure.external.ExperienceSummarizer;
@@ -26,7 +24,6 @@ public class ExperienceApiService {
 
     private final ExperienceService experienceService;
     private final UserService userService;
-    private final ProjectService projectService;
     private final ProjectMemberRepository projectMemberRepository;
     private final ExperienceSummarizer experienceSummarizer;
 
@@ -46,10 +43,7 @@ public class ExperienceApiService {
 
         Experience experience = experienceService
                 .findByProjectIdAndUserId(projectId, user.getId())
-                .orElseGet(() -> {
-                    Project project = projectService.getById(projectId);
-                    return Experience.create(new ExperienceCreateCommand(user, project, request.content()));
-                });
+                .orElseGet(() -> Experience.create(new ExperienceCreateCommand(user.getId(), projectId, request.content())));
 
         experience.updateContent(request.content());
 
@@ -61,7 +55,7 @@ public class ExperienceApiService {
         User user = userService.getByEmail(email);
         Experience experience = experienceService.getById(id);
 
-        if (!experience.getUser().getId().equals(user.getId())) {
+        if (!experience.getUserId().equals(user.getId())) {
             throw new ForbiddenException("본인의 경험 기록만 요약할 수 있습니다.");
         }
 
