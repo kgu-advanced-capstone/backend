@@ -18,8 +18,8 @@ spring:
       host: localhost
       port: 6379
 
-  sentry:
-    enabled: false # 로컬에선 Sentry를 끕니다.
+sentry:
+  enabled: false # 로컬에선 Sentry를 끕니다.
 
 
 
