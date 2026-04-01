@@ -1,0 +1,133 @@
+<?xml version="1.0"?>
+<!DOCTYPE module PUBLIC
+        "-//Checkstyle//DTD Checkstyle Configuration 1.3//EN"
+        "https://checkstyle.org/dtds/configuration_1_3.dtd">
+
+<module name="Checker">
+    <property name="severity" value="error"/>
+    <property name="fileExtensions" value="java"/>
+    <property name="charset" value="UTF-8"/>
+
+    <module name="SuppressionFilter">
+        <property name="file" value="${config_loc}/suppressions.xml"/>
+        <property name="optional" value="true"/>
+    </module>
+
+    <!-- 줄 끝 공백 금지 -->
+    <module name="RegexpSingleline">
+        <property name="format" value="\s+$"/>
+        <property name="minimum" value="0"/>
+        <property name="maximum" value="0"/>
+        <property name="message" value="줄 끝에 공백이 있습니다."/>
+    </module>
+
+    <!-- 파일 끝 개행 -->
+    <module name="NewlineAtEndOfFile">
+        <property name="lineSeparator" value="lf"/>
+    </module>
+
+    <!-- 라인 길이 최대 120자 (import, package 선언 제외) -->
+    <module name="LineLength">
+        <property name="max" value="120"/>
+        <property name="ignorePattern" value="^package.*|^import.*"/>
+    </module>
+
+    <module name="TreeWalker">
+
+        <!-- ===== 명명 규칙 ===== -->
+        <module name="TypeName"/>
+        <module name="ConstantName"/>
+        <module name="LocalVariableName"/>
+        <module name="MemberName"/>
+        <module name="MethodName"/>
+        <module name="ParameterName"/>
+        <module name="StaticVariableName"/>
+        <module name="PackageName">
+            <property name="format" value="^[a-z]+(\.[a-z][a-z0-9]*)*$"/>
+        </module>
+
+        <!-- ===== import 규칙 ===== -->
+        <!-- 와일드카드 import 금지 (static 포함) -->
+        <module name="AvoidStarImport"/>
+        <!-- 사용되지 않는 import 금지 -->
+        <module name="UnusedImports"/>
+        <!-- 중복 import 금지 -->
+        <module name="RedundantImport"/>
+        <!-- 불법 import 금지 (sun.*, com.sun.*) -->
+        <module name="IllegalImport"/>
+
+        <!-- ===== 공백 ===== -->
+        <!-- 제네릭 공백 규칙 (List<String> 등) -->
+        <module name="GenericWhitespace"/>
+        <!-- 메서드 이름과 여는 괄호 사이 공백 금지 -->
+        <module name="MethodParamPad"/>
+        <!-- 특정 토큰 뒤 공백 금지 -->
+        <module name="NoWhitespaceAfter">
+            <property name="tokens"
+                      value="BNOT, DEC, DOT, INC, LNOT, UNARY_MINUS, UNARY_PLUS, ARRAY_DECLARATOR"/>
+        </module>
+        <!-- 특정 토큰 앞 공백 금지 -->
+        <module name="NoWhitespaceBefore"/>
+        <!-- 연산자 위치: 줄 바꿈 시 연산자를 다음 줄에 위치 -->
+        <module name="OperatorWrap"/>
+        <!-- 괄호 내부 공백 금지 -->
+        <module name="ParenPad"/>
+        <!-- 특정 토큰 뒤 공백 필수 (쉼표, 세미콜론 등) -->
+        <module name="WhitespaceAfter"/>
+        <!-- 연산자, 키워드 주변 공백 필수 (LCURLY/RCURLY 제외 — 람다 블록 닫기 패턴 허용) -->
+        <module name="WhitespaceAround">
+            <property name="allowEmptyConstructors" value="true"/>
+            <property name="allowEmptyMethods" value="true"/>
+            <property name="allowEmptyTypes" value="true"/>
+            <property name="allowEmptyLoops" value="true"/>
+            <property name="allowEmptyLambdas" value="true"/>
+            <property name="tokens"
+                      value="ASSIGN, BAND, BAND_ASSIGN, BOR, BOR_ASSIGN, BSR, BSR_ASSIGN,
+                             BXOR, BXOR_ASSIGN, COLON, DIV, DIV_ASSIGN, DO_WHILE, EQUAL,
+                             GE, GT, LAMBDA, LAND, LE, LITERAL_CATCH, LITERAL_DO,
+                             LITERAL_ELSE, LITERAL_FINALLY, LITERAL_FOR, LITERAL_IF,
+                             LITERAL_RETURN, LITERAL_SWITCH, LITERAL_SYNCHRONIZED,
+                             LITERAL_TRY, LITERAL_WHILE, LOR, LT, MINUS, MINUS_ASSIGN,
+                             MOD, MOD_ASSIGN, NOT_EQUAL, PLUS, PLUS_ASSIGN, QUESTION,
+                             SL, SL_ASSIGN, SR, SR_ASSIGN, STAR, STAR_ASSIGN,
+                             TYPE_EXTENSION_AND, WILDCARD_TYPE"/>
+        </module>
+
+        <!-- ===== 중괄호 ===== -->
+        <!-- 여는 중괄호 위치: 같은 줄 -->
+        <module name="LeftCurly"/>
+        <!-- 닫는 중괄호 위치 -->
+        <module name="RightCurly"/>
+        <!-- if/else/for/while/do 에 항상 중괄호 사용 -->
+        <module name="NeedBraces"/>
+
+        <!-- ===== 수정자 ===== -->
+        <!-- 수정자 선언 순서: public protected private abstract default static final ... -->
+        <module name="ModifierOrder"/>
+        <!-- 불필요한 수정자 금지 (interface 메서드의 public abstract 등) -->
+        <module name="RedundantModifier"/>
+
+        <!-- ===== 코딩 규칙 ===== -->
+        <!-- 빈 구문 금지 (;; 등) -->
+        <module name="EmptyStatement"/>
+        <!-- equals() 재정의 시 hashCode()도 재정의 -->
+        <module name="EqualsHashCode"/>
+        <!-- Boolean 표현식 단순화 -->
+        <module name="SimplifyBooleanExpression"/>
+        <!-- Boolean 반환문 단순화 -->
+        <module name="SimplifyBooleanReturn"/>
+        <!-- 문자열 비교에 == 사용 금지 (equals() 사용) -->
+        <module name="StringLiteralEquality"/>
+
+        <!-- ===== 기타 ===== -->
+        <!-- long 리터럴에 소문자 l 사용 금지 (대문자 L 사용) -->
+        <module name="UpperEll"/>
+        <!-- Java 배열 타입 선언 방식 강제 (int[] 사용, int a[] 금지) -->
+        <module name="ArrayTypeStyle"/>
+        <!-- 파일명과 public 클래스명 일치 -->
+        <module name="OuterTypeFilename"/>
+        <!-- 파일당 최상위 클래스 하나만 허용 -->
+        <module name="OneTopLevelClass"/>
+
+    </module>
+</module>

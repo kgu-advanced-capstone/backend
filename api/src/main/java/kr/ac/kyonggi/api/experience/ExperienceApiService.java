@@ -43,7 +43,8 @@ public class ExperienceApiService {
 
         Experience experience = experienceService
                 .findByProjectIdAndUserId(projectId, user.getId())
-                .orElseGet(() -> Experience.create(new ExperienceCreateCommand(user.getId(), projectId, request.content())));
+                .orElseGet(() -> Experience.create(
+                        new ExperienceCreateCommand(user.getId(), projectId, request.content())));
 
         experience.updateContent(request.content());
 

@@ -1,6 +1,8 @@
 package kr.ac.kyonggi.common.exception;
 
+import jakarta.servlet.http.HttpServletRequest;
 import kr.ac.kyonggi.common.response.ErrorResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.FieldError;
@@ -10,6 +12,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.stream.Collectors;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -38,7 +41,8 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleGeneral(Exception ex) {
+    public ResponseEntity<ErrorResponse> handleGeneral(Exception ex, HttpServletRequest request) {
+        log.error("Unhandled Exception occurred at {} {}: ", request.getMethod(), request.getRequestURI(), ex);
         return ResponseEntity
                 .internalServerError()
                 .body(ErrorResponse.of("서버 내부 오류가 발생했습니다.", 500));

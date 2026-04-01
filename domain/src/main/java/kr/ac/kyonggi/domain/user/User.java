@@ -1,6 +1,11 @@
 package kr.ac.kyonggi.domain.user;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -54,10 +59,20 @@ public class User {
     }
 
     public void updateProfile(UpdateProfileCommand command) {
-        if (command.name() != null) this.name = command.name();
-        if (command.phone() != null) this.phone = command.phone();
-        if (command.github() != null) this.github = command.github();
-        if (command.blog() != null) this.blog = command.blog();
-        if (command.profileImage() != null) this.profileImage = command.profileImage();
+        if (command.name() != null) {
+            this.name = command.name();
+        }
+        if (command.phone() != null) {
+            this.phone = command.phone();
+        }
+        if (command.github() != null) {
+            this.github = command.github();
+        }
+        if (command.blog() != null) {
+            this.blog = command.blog();
+        }
+        if (command.profileImage() != null) {
+            this.profileImage = command.profileImage();
+        }
     }
 }

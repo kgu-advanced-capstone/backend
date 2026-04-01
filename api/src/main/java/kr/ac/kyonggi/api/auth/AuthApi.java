@@ -42,8 +42,8 @@ public interface AuthApi {
 
     @Operation(
             summary = "로그인",
-            description = "이메일/비밀번호로 로그인합니다. 성공 시 JSESSIONID 쿠키가 설정됩니다. " +
-                    "이 엔드포인트는 Spring Security 필터가 처리합니다.",
+            description = "이메일/비밀번호로 로그인합니다. 성공 시 JSESSIONID 쿠키가 설정됩니다. "
+                    + "이 엔드포인트는 Spring Security 필터가 처리합니다.",
             security = {}
     )
     @ApiResponses({
