@@ -7,11 +7,14 @@ import kr.ac.kyonggi.common.exception.ForbiddenException;
 import kr.ac.kyonggi.domain.experience.Experience;
 import kr.ac.kyonggi.domain.experience.ExperienceCreateCommand;
 import kr.ac.kyonggi.domain.experience.ExperienceService;
+import kr.ac.kyonggi.domain.project.Project;
+import kr.ac.kyonggi.domain.project.ProjectCreateCommand;
 import kr.ac.kyonggi.domain.project.ProjectMemberRepository;
+import kr.ac.kyonggi.domain.project.ProjectService;
 import kr.ac.kyonggi.domain.user.User;
 import kr.ac.kyonggi.domain.user.UserCreateCommand;
 import kr.ac.kyonggi.domain.user.UserService;
-import kr.ac.kyonggi.infrastructure.external.ExperienceSummarizer;
+import kr.ac.kyonggi.domain.experience.ExperienceSummarizer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -28,13 +31,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class ExperienceApiServiceTest {
 
     @Mock private ExperienceService experienceService;
+    @Mock private ProjectService projectService;
     @Mock private UserService userService;
     @Mock private ProjectMemberRepository projectMemberRepository;
     @Mock private ExperienceSummarizer experienceSummarizer;
@@ -47,12 +49,16 @@ class ExperienceApiServiceTest {
     private static final Long PROJECT_ID = 10L;
 
     private User user;
+    private Project project;
     private Experience experience;
 
     @BeforeEach
     void setUp() {
         user = User.create(new UserCreateCommand(EMAIL, "pw", "홍길동", null));
         ReflectionTestUtils.setField(user, "id", USER_ID);
+
+        project = Project.create(new ProjectCreateCommand("프로젝트 제목", "설명", "카테고리", List.of("Java"), 5, null, USER_ID));
+        ReflectionTestUtils.setField(project, "id", PROJECT_ID);
 
         experience = Experience.create(new ExperienceCreateCommand(USER_ID, PROJECT_ID, "로그인 기능을 구현했습니다."));
         ReflectionTestUtils.setField(experience, "id", 100L);
@@ -135,7 +141,14 @@ class ExperienceApiServiceTest {
     void summarize_generatesAiSummary_forOwner() {
         given(userService.getByEmail(EMAIL)).willReturn(user);
         given(experienceService.getById(100L)).willReturn(experience);
-        given(experienceSummarizer.summarize("로그인 기능을 구현했습니다.")).willReturn("JWT 기반 로그인 인증 시스템 구축");
+        given(projectService.getById(PROJECT_ID)).willReturn(project);
+        given(experienceSummarizer.summarize(
+                project.getTitle(),
+                project.getDescription(),
+                project.getCategory(),
+                project.getSkills(),
+                experience.getContent()
+        )).willReturn("JWT 기반 로그인 인증 시스템 구축");
         given(experienceService.save(any(Experience.class))).willAnswer(inv -> inv.getArgument(0));
 
         AiSummaryResponse result = experienceApiService.summarize(100L, EMAIL);
