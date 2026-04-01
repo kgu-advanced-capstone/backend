@@ -28,17 +28,13 @@ public class ProfileApiService {
     public ProfileResponse updateProfile(String email, UpdateProfileRequest request, MultipartFile profileImage) {
         User user = userService.getByEmail(email);
 
-        String profileImageUrl = user.getProfileImage();
+        String oldProfileImageUrl = user.getProfileImage();
+        String newProfileImageUrl = oldProfileImageUrl;
 
-        // 새 이미지가 업로드된 경우
+        // 1. 새 이미지가 업로드된 경우 먼저 업로드 수행
         if (profileImage != null && !profileImage.isEmpty()) {
-            // 기존 이미지가 있다면 삭제
-            if (profileImageUrl != null) {
-                fileStorage.delete(profileImageUrl);
-            }
-            // 새 이미지 업로드
             try {
-                profileImageUrl = fileStorage.upload(
+                newProfileImageUrl = fileStorage.upload(
                         profileImage.getInputStream(),
                         profileImage.getOriginalFilename(),
                         profileImage.getContentType()
@@ -48,13 +44,20 @@ public class ProfileApiService {
             }
         }
 
+        // 2. 유저 정보 업데이트 (DB 반영)
         User updated = userService.updateProfile(user.getId(), new UpdateProfileCommand(
                 request.name(),
                 request.phone(),
                 request.github(),
                 request.blog(),
-                profileImageUrl
+                newProfileImageUrl
         ));
+
+        // 3. 업데이트 성공 후, 새 이미지가 정상적으로 등록되었고 기존 이미지가 있었다면 기존 이미지 삭제
+        if (profileImage != null && !profileImage.isEmpty() && oldProfileImageUrl != null) {
+            fileStorage.delete(oldProfileImageUrl);
+        }
+
         return ProfileResponse.from(updated);
     }
 }

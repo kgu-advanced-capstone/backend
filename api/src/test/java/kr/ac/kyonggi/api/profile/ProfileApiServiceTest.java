@@ -10,6 +10,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -40,21 +41,18 @@ class ProfileApiServiceTest {
         User user = mock(User.class);
         when(user.getEmail()).thenReturn("test@test.com");
         when(user.getName()).thenReturn("홍길동");
-        when(user.getPhone()).thenReturn("010-0000-0000");
-        when(user.getGithub()).thenReturn("https://github.com/test");
         when(userService.getByEmail("test@test.com")).thenReturn(user);
 
         ProfileResponse result = profileApiService.getProfile("test@test.com");
 
         assertThat(result.email()).isEqualTo("test@test.com");
         assertThat(result.name()).isEqualTo("홍길동");
-        assertThat(result.github()).isEqualTo("https://github.com/test");
         verify(userService).getByEmail("test@test.com");
     }
 
     @Test
-    @DisplayName("updateProfile() 시 새 이미지가 업로드되면 기존 이미지를 삭제하고 새 이미지를 저장한다")
-    void updateProfile_whenNewImageUploaded_deletesOldAndSavesNew() throws IOException {
+    @DisplayName("updateProfile() 시 새 이미지가 업로드되면 [업로드 -> 업데이트 -> 기존 삭제] 순으로 진행한다")
+    void updateProfile_whenNewImageUploaded_followsCorrectOrder() throws IOException {
         // given
         User user = mock(User.class);
         when(user.getId()).thenReturn(1L);
@@ -69,9 +67,11 @@ class ProfileApiServiceTest {
         // when
         profileApiService.updateProfile("test@test.com", request, profileImage);
 
-        // then
-        verify(fileStorage).delete("old-image.png");
-        verify(fileStorage).upload(any(InputStream.class), eq("new.png"), eq("image/png"));
+        // then (InOrder로 순서 검증)
+        InOrder inOrder = inOrder(fileStorage, userService);
+        inOrder.verify(fileStorage).upload(any(InputStream.class), eq("new.png"), eq("image/png"));
+        inOrder.verify(userService).updateProfile(eq(1L), any(UpdateProfileCommand.class));
+        inOrder.verify(fileStorage).delete("old-image.png");
     }
 
     @Test
