@@ -4,14 +4,16 @@ import jakarta.validation.Valid;
 import kr.ac.kyonggi.api.profile.dto.ProfileResponse;
 import kr.ac.kyonggi.api.profile.dto.UpdateProfileRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/profile")
@@ -20,15 +22,18 @@ public class ProfileController implements ProfileApi {
 
     private final ProfileApiService profileApiService;
 
+    @Override
     @GetMapping
     public ResponseEntity<ProfileResponse> getProfile(@AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(profileApiService.getProfile(userDetails.getUsername()));
     }
 
-    @PatchMapping
+    @Override
+    @PatchMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ProfileResponse> updateProfile(
             @AuthenticationPrincipal UserDetails userDetails,
-            @Valid @RequestBody UpdateProfileRequest request) {
-        return ResponseEntity.ok(profileApiService.updateProfile(userDetails.getUsername(), request));
+            @Valid @RequestPart("request") UpdateProfileRequest request,
+            @RequestPart(value = "profileImage", required = false) MultipartFile profileImage) {
+        return ResponseEntity.ok(profileApiService.updateProfile(userDetails.getUsername(), request, profileImage));
     }
 }
