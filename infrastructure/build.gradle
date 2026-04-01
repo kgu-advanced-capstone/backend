@@ -5,6 +5,7 @@ dependencies {
     implementation project(':domain')
     implementation project(':common')
     implementation 'org.springframework.boot:spring-boot-starter-aop'
+    implementation 'org.springframework.ai:spring-ai-starter-model-openai'
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
     implementation 'org.redisson:redisson:3.27.2'
     implementation 'io.micrometer:micrometer-core'

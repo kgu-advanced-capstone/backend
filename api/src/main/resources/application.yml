@@ -1,6 +1,12 @@
 spring:
   application:
     name: api
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY:}
+      chat:
+        options:
+          model: gpt-4o-mini
   datasource:
     hikari:
       pool-name: mysql-main-pool
