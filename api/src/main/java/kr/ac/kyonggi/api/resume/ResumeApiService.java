@@ -11,8 +11,8 @@ import kr.ac.kyonggi.domain.resume.Resume;
 import kr.ac.kyonggi.domain.resume.ResumedExperience;
 import kr.ac.kyonggi.domain.resume.ResumedExperienceRepository;
 import kr.ac.kyonggi.domain.resume.ResumeService;
-import kr.ac.kyonggi.domain.resume.ResumeAiClient;
 import kr.ac.kyonggi.domain.user.User;
+import kr.ac.kyonggi.domain.experience.ExperienceSummarizer;
 import kr.ac.kyonggi.domain.user.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -32,7 +32,7 @@ public class ResumeApiService {
     private final ProjectService projectService;
     private final ExperienceService experienceService;
     private final ResumedExperienceRepository resumedExperienceRepository;
-    private final ResumeAiClient resumeAiClient;
+    private final ExperienceSummarizer experienceSummarizer;
 
     @Transactional(readOnly = true)
     public ResumeResponse getResume(String email) {
@@ -69,7 +69,7 @@ public class ResumeApiService {
                     String experienceContent = Optional.ofNullable(experienceMap.get(project.getId()))
                             .map(Experience::getContent)
                             .orElse(null);
-                    List<String> keyPoints = resumeAiClient.generateKeyPoints(
+                    List<String> keyPoints = experienceSummarizer.generateKeyPoints(
                             project.getTitle(),
                             project.getDescription(),
                             project.getCategory(),

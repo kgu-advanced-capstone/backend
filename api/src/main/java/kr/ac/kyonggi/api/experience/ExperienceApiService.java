@@ -7,10 +7,12 @@ import kr.ac.kyonggi.common.exception.ForbiddenException;
 import kr.ac.kyonggi.domain.experience.Experience;
 import kr.ac.kyonggi.domain.experience.ExperienceCreateCommand;
 import kr.ac.kyonggi.domain.experience.ExperienceService;
+import kr.ac.kyonggi.domain.project.Project;
 import kr.ac.kyonggi.domain.project.ProjectMemberRepository;
+import kr.ac.kyonggi.domain.project.ProjectService;
 import kr.ac.kyonggi.domain.user.User;
 import kr.ac.kyonggi.domain.user.UserService;
-import kr.ac.kyonggi.infrastructure.external.ExperienceSummarizer;
+import kr.ac.kyonggi.domain.experience.ExperienceSummarizer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +25,7 @@ import java.util.List;
 public class ExperienceApiService {
 
     private final ExperienceService experienceService;
+    private final ProjectService projectService;
     private final UserService userService;
     private final ProjectMemberRepository projectMemberRepository;
     private final ExperienceSummarizer experienceSummarizer;
@@ -60,7 +63,16 @@ public class ExperienceApiService {
             throw new ForbiddenException("본인의 경험 기록만 요약할 수 있습니다.");
         }
 
-        String summary = experienceSummarizer.summarize(experience.getContent());
+        Project project = projectService.getById(experience.getProjectId());
+
+        String summary = experienceSummarizer.summarize(
+                project.getTitle(),
+                project.getDescription(),
+                project.getCategory(),
+                project.getSkills(),
+                experience.getContent()
+        );
+
         experience.updateAiSummary(summary);
         experienceService.save(experience);
 

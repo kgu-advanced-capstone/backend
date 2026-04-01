@@ -12,8 +12,8 @@ import kr.ac.kyonggi.domain.project.ProjectMemberCreateCommand;
 import kr.ac.kyonggi.domain.project.ProjectService;
 import kr.ac.kyonggi.domain.resume.Resume;
 import kr.ac.kyonggi.domain.resume.ResumedExperience;
-import kr.ac.kyonggi.domain.resume.ResumeAiClient;
 import kr.ac.kyonggi.domain.resume.ResumedExperienceRepository;
+import kr.ac.kyonggi.domain.experience.ExperienceSummarizer;
 import kr.ac.kyonggi.domain.resume.ResumeService;
 import kr.ac.kyonggi.domain.user.User;
 import kr.ac.kyonggi.domain.user.UserCreateCommand;
@@ -48,7 +48,7 @@ class ResumeApiServiceTest {
     @Mock private ProjectService projectService;
     @Mock private ExperienceService experienceService;
     @Mock private ResumedExperienceRepository resumedExperienceRepository;
-    @Mock private ResumeAiClient resumeAiClient;
+    @Mock private ExperienceSummarizer experienceSummarizer;
 
     @InjectMocks
     private ResumeApiService resumeApiService;
@@ -117,7 +117,7 @@ class ResumeApiServiceTest {
         given(projectService.getAllByIds(List.of(PROJECT_ID))).willReturn(List.of(project));
         given(experienceService.findByProjectIdsAndUserId(List.of(PROJECT_ID), USER_ID))
                 .willReturn(Map.of(PROJECT_ID, experience));
-        given(resumeAiClient.generateKeyPoints(any(), any(), any(), any(), any()))
+        given(experienceSummarizer.generateKeyPoints(any(), any(), any(), any(), any()))
                 .willReturn(List.of("키포인트1", "키포인트2"));
         given(resumeService.findByUserId(USER_ID)).willReturn(Optional.empty());
         given(resumeService.save(any(Resume.class))).willAnswer(inv -> {
@@ -128,7 +128,7 @@ class ResumeApiServiceTest {
 
         resumeApiService.generate(EMAIL);
 
-        verify(resumeAiClient).generateKeyPoints(
+        verify(experienceSummarizer).generateKeyPoints(
                 "테스트 프로젝트", "프로젝트 설명", "백엔드",
                 List.of("Java", "Spring"), "로그인 기능을 구현했습니다."
         );
@@ -142,7 +142,7 @@ class ResumeApiServiceTest {
         given(projectService.getAllByIds(List.of(PROJECT_ID))).willReturn(List.of(project));
         given(experienceService.findByProjectIdsAndUserId(List.of(PROJECT_ID), USER_ID))
                 .willReturn(Map.of());
-        given(resumeAiClient.generateKeyPoints(any(), any(), any(), any(), any()))
+        given(experienceSummarizer.generateKeyPoints(any(), any(), any(), any(), any()))
                 .willReturn(List.of("키포인트1"));
         given(resumeService.findByUserId(USER_ID)).willReturn(Optional.empty());
         given(resumeService.save(any(Resume.class))).willAnswer(inv -> {
@@ -153,7 +153,7 @@ class ResumeApiServiceTest {
 
         resumeApiService.generate(EMAIL);
 
-        verify(resumeAiClient).generateKeyPoints(
+        verify(experienceSummarizer).generateKeyPoints(
                 "테스트 프로젝트", "프로젝트 설명", "백엔드",
                 List.of("Java", "Spring"), null
         );
@@ -167,7 +167,7 @@ class ResumeApiServiceTest {
         given(projectService.getAllByIds(List.of(PROJECT_ID))).willReturn(List.of(project));
         given(experienceService.findByProjectIdsAndUserId(List.of(PROJECT_ID), USER_ID))
                 .willReturn(Map.of());
-        given(resumeAiClient.generateKeyPoints(any(), any(), any(), any(), any()))
+        given(experienceSummarizer.generateKeyPoints(any(), any(), any(), any(), any()))
                 .willReturn(List.of("키포인트1", "키포인트2"));
         given(resumeService.findByUserId(USER_ID)).willReturn(Optional.empty());
         given(resumeService.save(any(Resume.class))).willAnswer(inv -> {
@@ -197,7 +197,7 @@ class ResumeApiServiceTest {
         given(projectService.getAllByIds(List.of(PROJECT_ID))).willReturn(List.of(project));
         given(experienceService.findByProjectIdsAndUserId(List.of(PROJECT_ID), USER_ID))
                 .willReturn(Map.of());
-        given(resumeAiClient.generateKeyPoints(any(), any(), any(), any(), any()))
+        given(experienceSummarizer.generateKeyPoints(any(), any(), any(), any(), any()))
                 .willReturn(List.of("새 키포인트"));
         given(resumeService.findByUserId(USER_ID)).willReturn(Optional.of(existingResume));
         given(resumeService.save(any(Resume.class))).willReturn(existingResume);
@@ -225,6 +225,6 @@ class ResumeApiServiceTest {
         ArgumentCaptor<List<ResumedExperience>> captor = ArgumentCaptor.forClass(List.class);
         verify(resumedExperienceRepository).saveAll(captor.capture());
         assertThat(captor.getValue()).isEmpty();
-        verify(resumeAiClient, never()).generateKeyPoints(any(), any(), any(), any(), any());
+        verify(experienceSummarizer, never()).generateKeyPoints(any(), any(), any(), any(), any());
     }
 }

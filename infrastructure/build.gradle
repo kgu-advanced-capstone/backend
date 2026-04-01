@@ -3,6 +3,7 @@ jar.enabled=true
 
 dependencies {
     implementation project(':domain')
+    implementation project(':common')
     implementation 'org.springframework.ai:spring-ai-starter-model-openai'
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
     implementation 'io.micrometer:micrometer-core'
