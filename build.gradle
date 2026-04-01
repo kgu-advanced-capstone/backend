@@ -31,6 +31,12 @@ subprojects {
         mavenCentral()
     }
 
+    dependencyManagement {
+        imports {
+            mavenBom "org.springframework.ai:spring-ai-bom:1.0.0"
+        }
+    }
+
     dependencies {
         implementation 'org.springframework.boot:spring-boot-starter'
         testImplementation 'org.springframework.boot:spring-boot-starter-test'
@@ -44,5 +50,20 @@ subprojects {
 
     test {
         useJUnitPlatform()
+    }
+
+    apply plugin: 'checkstyle'
+
+    checkstyle {
+        toolVersion = '10.20.0'
+        configFile = rootProject.file('config/checkstyle/checkstyle.xml')
+        maxWarnings = 0
+    }
+
+    tasks.withType(Checkstyle).configureEach {
+        reports {
+            html.required = true
+            xml.required = false
+        }
     }
 }

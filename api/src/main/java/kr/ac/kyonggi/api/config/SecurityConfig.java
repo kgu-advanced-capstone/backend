@@ -8,6 +8,7 @@ import kr.ac.kyonggi.api.security.LoginSuccessHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -65,7 +66,7 @@ public class SecurityConfig {
                         .requestMatchers("/actuator/**").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/api/auth/register", "/api/auth/login", "/api/auth/logout").permitAll()
-                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/projects", "/api/projects/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/projects", "/api/projects/*").permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((request, response, authException) -> {

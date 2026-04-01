@@ -22,7 +22,9 @@ public record MyProjectResponse(
         @Schema(description = "프로젝트 생성자 여부", example = "true")
         boolean isOwner
 ) {
-    public static MyProjectResponse from(Project project, ProjectMember member, Long currentUserId, long memberCount, String authorName) {
+    public static MyProjectResponse from(
+            Project project, ProjectMember member, Long currentUserId,
+            long memberCount, String authorName) {
         return new MyProjectResponse(
                 ProjectDetailResponse.from(project, memberCount, authorName),
                 member.getJoinedAt() != null ? member.getJoinedAt().toLocalDate() : null,

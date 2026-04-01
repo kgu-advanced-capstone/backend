@@ -33,7 +33,8 @@ public interface ExperienceApi {
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "조회 성공",
-                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = ExperienceResponse.class)))),
+                    content = @Content(array = @ArraySchema(
+                            schema = @Schema(implementation = ExperienceResponse.class)))),
             @ApiResponse(responseCode = "401", description = "인증 필요", content = @Content),
             @ApiResponse(responseCode = "404", description = "프로젝트 없음", content = @Content)
     })
