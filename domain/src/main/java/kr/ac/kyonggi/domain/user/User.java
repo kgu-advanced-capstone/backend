@@ -22,7 +22,7 @@ public class User {
     @Column(unique = true, nullable = false)
     private String email;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String password;
 
     @Column(nullable = false)
@@ -35,6 +35,17 @@ public class User {
     private String github;
 
     private String blog;
+
+    @Column(name = "provider_id")
+    private String providerId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "provider", nullable = false)
+    private OAuthProvider provider;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Role role;
 
     @CreatedDate
     private LocalDateTime createdAt;
@@ -51,6 +62,20 @@ public class User {
         this.password = command.password();
         this.name = command.name();
         this.profileImage = command.profileImage();
+        this.provider = OAuthProvider.LOCAL;
+        this.role = Role.USER;
+    }
+
+    public static User ofSocial(UserSocialCreateCommand command) {
+        User user = new User();
+        user.email = command.email();
+        user.name = command.name();
+        user.profileImage = command.profileImage();
+        user.providerId = command.providerId();
+        user.provider = command.provider();
+        user.role = Role.USER;
+        user.password = null;
+        return user;
     }
 
     public void updateProfile(UpdateProfileCommand command) {
