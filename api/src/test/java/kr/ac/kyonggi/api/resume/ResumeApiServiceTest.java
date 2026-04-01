@@ -12,12 +12,12 @@ import kr.ac.kyonggi.domain.project.ProjectMemberCreateCommand;
 import kr.ac.kyonggi.domain.project.ProjectService;
 import kr.ac.kyonggi.domain.resume.Resume;
 import kr.ac.kyonggi.domain.resume.ResumedExperience;
+import kr.ac.kyonggi.domain.resume.ResumeAiClient;
 import kr.ac.kyonggi.domain.resume.ResumedExperienceRepository;
 import kr.ac.kyonggi.domain.resume.ResumeService;
 import kr.ac.kyonggi.domain.user.User;
 import kr.ac.kyonggi.domain.user.UserCreateCommand;
 import kr.ac.kyonggi.domain.user.UserService;
-import kr.ac.kyonggi.infrastructure.external.GeminiResumeClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -48,7 +48,7 @@ class ResumeApiServiceTest {
     @Mock private ProjectService projectService;
     @Mock private ExperienceService experienceService;
     @Mock private ResumedExperienceRepository resumedExperienceRepository;
-    @Mock private GeminiResumeClient geminiClient;
+    @Mock private ResumeAiClient resumeAiClient;
 
     @InjectMocks
     private ResumeApiService resumeApiService;
@@ -107,8 +107,8 @@ class ResumeApiServiceTest {
     // ── generate() ────────────────────────────────────────────────────────────
 
     @Test
-    @DisplayName("generate()는 경험 기록이 있으면 content를 포함하여 Gemini를 호출한다")
-    void generate_passesExperienceContent_toGemini_whenExists() {
+    @DisplayName("generate()는 경험 기록이 있으면 content를 포함하여 AI를 호출한다")
+    void generate_passesExperienceContent_toAiClient_whenExists() {
         Experience experience = Experience.create(
                 new ExperienceCreateCommand(USER_ID, PROJECT_ID, "로그인 기능을 구현했습니다."));
 
@@ -117,7 +117,7 @@ class ResumeApiServiceTest {
         given(projectService.getAllByIds(List.of(PROJECT_ID))).willReturn(List.of(project));
         given(experienceService.findByProjectIdsAndUserId(List.of(PROJECT_ID), USER_ID))
                 .willReturn(Map.of(PROJECT_ID, experience));
-        given(geminiClient.generateKeyPoints(any(), any(), any(), any(), any()))
+        given(resumeAiClient.generateKeyPoints(any(), any(), any(), any(), any()))
                 .willReturn(List.of("키포인트1", "키포인트2"));
         given(resumeService.findByUserId(USER_ID)).willReturn(Optional.empty());
         given(resumeService.save(any(Resume.class))).willAnswer(inv -> {
@@ -128,21 +128,21 @@ class ResumeApiServiceTest {
 
         resumeApiService.generate(EMAIL);
 
-        verify(geminiClient).generateKeyPoints(
+        verify(resumeAiClient).generateKeyPoints(
                 "테스트 프로젝트", "프로젝트 설명", "백엔드",
                 List.of("Java", "Spring"), "로그인 기능을 구현했습니다."
         );
     }
 
     @Test
-    @DisplayName("generate()는 경험 기록이 없으면 content를 null로 Gemini를 호출한다")
-    void generate_passesNullContent_toGemini_whenNoExperience() {
+    @DisplayName("generate()는 경험 기록이 없으면 content를 null로 AI를 호출한다")
+    void generate_passesNullContent_toAiClient_whenNoExperience() {
         given(userService.getByEmail(EMAIL)).willReturn(user);
         given(projectService.getMembershipsOf(USER_ID)).willReturn(List.of(member));
         given(projectService.getAllByIds(List.of(PROJECT_ID))).willReturn(List.of(project));
         given(experienceService.findByProjectIdsAndUserId(List.of(PROJECT_ID), USER_ID))
                 .willReturn(Map.of());
-        given(geminiClient.generateKeyPoints(any(), any(), any(), any(), any()))
+        given(resumeAiClient.generateKeyPoints(any(), any(), any(), any(), any()))
                 .willReturn(List.of("키포인트1"));
         given(resumeService.findByUserId(USER_ID)).willReturn(Optional.empty());
         given(resumeService.save(any(Resume.class))).willAnswer(inv -> {
@@ -153,7 +153,7 @@ class ResumeApiServiceTest {
 
         resumeApiService.generate(EMAIL);
 
-        verify(geminiClient).generateKeyPoints(
+        verify(resumeAiClient).generateKeyPoints(
                 "테스트 프로젝트", "프로젝트 설명", "백엔드",
                 List.of("Java", "Spring"), null
         );
@@ -167,7 +167,7 @@ class ResumeApiServiceTest {
         given(projectService.getAllByIds(List.of(PROJECT_ID))).willReturn(List.of(project));
         given(experienceService.findByProjectIdsAndUserId(List.of(PROJECT_ID), USER_ID))
                 .willReturn(Map.of());
-        given(geminiClient.generateKeyPoints(any(), any(), any(), any(), any()))
+        given(resumeAiClient.generateKeyPoints(any(), any(), any(), any(), any()))
                 .willReturn(List.of("키포인트1", "키포인트2"));
         given(resumeService.findByUserId(USER_ID)).willReturn(Optional.empty());
         given(resumeService.save(any(Resume.class))).willAnswer(inv -> {
@@ -197,7 +197,7 @@ class ResumeApiServiceTest {
         given(projectService.getAllByIds(List.of(PROJECT_ID))).willReturn(List.of(project));
         given(experienceService.findByProjectIdsAndUserId(List.of(PROJECT_ID), USER_ID))
                 .willReturn(Map.of());
-        given(geminiClient.generateKeyPoints(any(), any(), any(), any(), any()))
+        given(resumeAiClient.generateKeyPoints(any(), any(), any(), any(), any()))
                 .willReturn(List.of("새 키포인트"));
         given(resumeService.findByUserId(USER_ID)).willReturn(Optional.of(existingResume));
         given(resumeService.save(any(Resume.class))).willReturn(existingResume);
@@ -225,6 +225,6 @@ class ResumeApiServiceTest {
         ArgumentCaptor<List<ResumedExperience>> captor = ArgumentCaptor.forClass(List.class);
         verify(resumedExperienceRepository).saveAll(captor.capture());
         assertThat(captor.getValue()).isEmpty();
-        verify(geminiClient, never()).generateKeyPoints(any(), any(), any(), any(), any());
+        verify(resumeAiClient, never()).generateKeyPoints(any(), any(), any(), any(), any());
     }
 }
