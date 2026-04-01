@@ -5,8 +5,11 @@ import kr.ac.kyonggi.common.lock.DistributedLock;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
+import org.redisson.config.Config;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
@@ -26,10 +29,7 @@ import java.util.concurrent.TimeUnit;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@SpringBootTest(
-        webEnvironment = SpringBootTest.WebEnvironment.NONE,
-        properties = "spring.autoconfigure.exclude="  // test 프로필의 Redis 제외 설정 해제
-)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @ActiveProfiles("test")
 @Testcontainers
 class DistributedLockConcurrencyTest {
@@ -132,6 +132,15 @@ class DistributedLockConcurrencyTest {
         @Bean
         CounterService counterService() {
             return new CounterService();
+        }
+
+        @Bean(destroyMethod = "shutdown")
+        RedissonClient redissonClient(
+                @Value("${spring.data.redis.host}") String host,
+                @Value("${spring.data.redis.port}") int port) {
+            Config config = new Config();
+            config.useSingleServer().setAddress("redis://" + host + ":" + port);
+            return Redisson.create(config);
         }
     }
 
