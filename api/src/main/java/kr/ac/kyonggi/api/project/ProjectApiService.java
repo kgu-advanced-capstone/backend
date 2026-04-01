@@ -1,11 +1,6 @@
 package kr.ac.kyonggi.api.project;
 
-import kr.ac.kyonggi.api.project.dto.CreateProjectRequest;
-import kr.ac.kyonggi.api.project.dto.UpdateProjectStatusRequest;
-import kr.ac.kyonggi.api.project.dto.MyProjectResponse;
-import kr.ac.kyonggi.api.project.dto.ProjectDetailResponse;
-import kr.ac.kyonggi.api.project.dto.ProjectListResponse;
-import kr.ac.kyonggi.api.project.dto.ProjectSummaryResponse;
+import kr.ac.kyonggi.api.project.dto.*;
 import kr.ac.kyonggi.domain.notification.NotificationCreatedEvent;
 import kr.ac.kyonggi.domain.project.Project;
 import kr.ac.kyonggi.domain.project.ProjectCreateCommand;
@@ -77,8 +72,9 @@ public class ProjectApiService {
     @Transactional
     public void applyProject(Long projectId, String userEmail) {
         User user = userService.getByEmail(userEmail);
-        projectService.apply(projectId, user.getId());
-        Project project = projectService.getById(projectId);
+
+        Project project = projectService.apply(projectId, user.getId());
+
         eventPublisher.publishEvent(new NotificationCreatedEvent(
                 user.getId(), "\"" + project.getTitle() + "\" 프로젝트에 참가했습니다."));
     }

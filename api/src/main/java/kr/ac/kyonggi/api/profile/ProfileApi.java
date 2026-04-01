@@ -11,12 +11,14 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import kr.ac.kyonggi.api.profile.dto.ProfileResponse;
 import kr.ac.kyonggi.api.profile.dto.UpdateProfileRequest;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.multipart.MultipartFile;
 
 @Tag(name = "Profile", description = "프로필 API")
 public interface ProfileApi {
@@ -47,9 +49,10 @@ public interface ProfileApi {
             @ApiResponse(responseCode = "400", description = "유효성 검사 실패", content = @Content),
             @ApiResponse(responseCode = "401", description = "인증 필요", content = @Content)
     })
-    @PatchMapping
+    @PatchMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     ResponseEntity<ProfileResponse> updateProfile(
             @Parameter(hidden = true) @AuthenticationPrincipal UserDetails userDetails,
-            @Valid @RequestBody UpdateProfileRequest request
+            @Valid @RequestPart("request") UpdateProfileRequest request,
+            @RequestPart(value = "profileImage", required = false) MultipartFile profileImage
     );
 }
