@@ -1,0 +1,17 @@
+#!/bin/sh
+# Checkstyle 코드 스타일 검사 (main 소스 대상)
+
+echo "Checkstyle 코드 스타일 검사 중..."
+
+./gradlew checkstyleMain -q 2>&1
+
+if [ $? -ne 0 ]; then
+    echo ""
+    echo "[오류] Checkstyle 검사 실패: 스타일 위반이 있습니다."
+    echo "  ./gradlew checkstyleMain 을 실행하여 상세 내용을 확인하세요."
+    echo "  HTML 리포트 위치:"
+    find . -name "main.html" -path "*/checkstyle/*" 2>/dev/null | head -5
+    exit 1
+fi
+
+echo "Checkstyle 검사 통과"
