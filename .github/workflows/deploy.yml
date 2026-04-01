@@ -45,6 +45,8 @@ jobs:
           run: |
             chmod +x gradlew
             ./gradlew clean :api:bootJar -x test
+          env:
+            SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
 
         # 3. 도커 로그인
         - name: Login to Docker Hub
