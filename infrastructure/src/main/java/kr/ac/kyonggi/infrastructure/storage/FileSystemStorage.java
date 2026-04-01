@@ -1,6 +1,7 @@
 package kr.ac.kyonggi.infrastructure.storage;
 
 import kr.ac.kyonggi.common.exception.StorageException;
+import kr.ac.kyonggi.domain.storage.FileStorage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

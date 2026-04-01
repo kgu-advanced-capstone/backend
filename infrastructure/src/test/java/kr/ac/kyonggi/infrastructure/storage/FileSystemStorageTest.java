@@ -1,5 +1,6 @@
 package kr.ac.kyonggi.infrastructure.storage;
 
+import kr.ac.kyonggi.domain.storage.FileStorage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
