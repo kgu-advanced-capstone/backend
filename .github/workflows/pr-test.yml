@@ -37,7 +37,11 @@ jobs:
             MISSED=$(echo "$LINE" | grep -o 'missed="[0-9]*"' | grep -o '[0-9]*')
             COVERED=$(echo "$LINE" | grep -o 'covered="[0-9]*"' | grep -o '[0-9]*')
             TOTAL=$((MISSED + COVERED))
-            PCT=$(awk "BEGIN { printf \"%.1f\", ($COVERED/$TOTAL)*100 }")
+            if [ "$TOTAL" -eq 0 ]; then
+              PCT="0.0"
+            else
+              PCT=$(awk "BEGIN { printf \"%.1f\", ($COVERED/$TOTAL)*100 }")
+            fi
             echo "pct=$PCT" >> "$GITHUB_OUTPUT"
             echo "covered=$COVERED" >> "$GITHUB_OUTPUT"
             echo "total=$TOTAL" >> "$GITHUB_OUTPUT"
