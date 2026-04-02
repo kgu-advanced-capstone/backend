@@ -33,7 +33,7 @@ class FileSystemStorageTest {
     @BeforeEach
     void setUp() {
         // 실제 yml을 읽지 않고 테스트용 설정값을 직접 주입
-        StorageProperties properties = new StorageProperties(bucket, endpoint);
+        StorageProperties properties = new StorageProperties(bucket, endpoint,"./test", "http://test");
         fileSystemStorage = new FileSystemStorage(s3Client, properties);
     }
 
