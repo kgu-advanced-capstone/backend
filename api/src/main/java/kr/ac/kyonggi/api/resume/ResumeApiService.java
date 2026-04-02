@@ -20,7 +20,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -66,16 +65,25 @@ public class ResumeApiService {
                 .filter(member -> projectMap.containsKey(member.getProjectId()))
                 .map(member -> {
                     Project project = projectMap.get(member.getProjectId());
-                    String experienceContent = Optional.ofNullable(experienceMap.get(project.getId()))
-                            .map(Experience::getContent)
-                            .orElse(null);
-                    List<String> keyPoints = experienceSummarizer.generateKeyPoints(
-                            project.getTitle(),
-                            project.getDescription(),
-                            project.getCategory(),
-                            project.getSkills(),
-                            experienceContent
-                    );
+                    Experience experience = experienceMap.get(project.getId());
+                    String experienceContent = experience != null ? experience.getContent() : null;
+
+                    List<String> keyPoints;
+                    if (experience != null && experience.getAiSummary() != null && !experience.getAiSummary().isBlank()) {
+                        keyPoints = List.of(experience.getAiSummary().split("\n"));
+                    } else {
+                        keyPoints = experienceSummarizer.generateKeyPoints(
+                                project.getTitle(),
+                                project.getDescription(),
+                                project.getCategory(),
+                                project.getSkills(),
+                                experienceContent
+                        );
+                        if (experience != null) {
+                            experience.updateAiSummary(String.join("\n", keyPoints));
+                            experienceService.save(experience);
+                        }
+                    }
                     return ResumedExperience.of(savedResume.getId(), project.getId(), project.getTitle(), keyPoints);
                 })
                 .toList();

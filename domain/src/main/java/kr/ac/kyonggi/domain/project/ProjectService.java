@@ -25,4 +25,8 @@ public interface ProjectService {
     List<Project> getAllByIds(List<Long> ids);
 
     Map<Long, Long> getMemberCounts(List<Long> projectIds);
+
+    List<ProjectMember> getParticipants(Long projectId);
+
+    List<ProjectMember> getParticipantsByProjectIds(List<Long> projectIds);
 }
