@@ -101,4 +101,16 @@ class ProjectMemberRepositoryTest {
         assertThat(memberships).hasSize(2);
         assertThat(memberships).extracting(ProjectMember::getUserId).containsOnly(user1.getId());
     }
+
+    @Test
+    @DisplayName("findByProjectId는 해당 프로젝트의 멤버 목록을 반환한다")
+    void findByProjectId_returnsProjectMembers() {
+        addMember(project, user1);
+        addMember(project, user2);
+
+        List<ProjectMember> members = projectMemberRepository.findByProjectId(project.getId());
+
+        assertThat(members).hasSize(2);
+        assertThat(members).extracting(ProjectMember::getProjectId).containsOnly(project.getId());
+    }
 }

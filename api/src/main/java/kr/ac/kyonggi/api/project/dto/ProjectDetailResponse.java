@@ -27,8 +27,11 @@ public record ProjectDetailResponse(
         )
         List<String> skills,
 
-        @Schema(description = "현재 팀원 수", example = "2")
-        int currentMembers,
+        @ArraySchema(
+                arraySchema = @Schema(description = "프로젝트 참여자 목록"),
+                schema = @Schema(implementation = ParticipantResponse.class)
+        )
+        List<ParticipantResponse> participants,
 
         @Schema(description = "최대 팀원 수", example = "4")
         int maxMembers,
@@ -44,14 +47,14 @@ public record ProjectDetailResponse(
         @Schema(description = "프로젝트 생성일 (yyyy-MM-dd)", example = "2026-03-01", type = "string")
         LocalDate createdAt
 ) {
-    public static ProjectDetailResponse from(Project project, long memberCount, String authorName) {
+    public static ProjectDetailResponse from(Project project, List<ParticipantResponse> participants, String authorName) {
         return new ProjectDetailResponse(
                 project.getId(),
                 project.getTitle(),
                 project.getDescription(),
                 project.getCategory(),
                 project.getSkills(),
-                (int) memberCount,
+                participants,
                 project.getMaxMembers(),
                 project.getDeadline(),
                 authorName,

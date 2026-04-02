@@ -1,6 +1,20 @@
 # CLAUDE.md
+작업 절차와 프로젝트 설명 포함.
+코드 작성 절차 **반드시 준수**.
+반드시 아래에 작성된 코드 작성 절차를 그대로 말하고 최초 시작.
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+# 코드 작성 절차 (반드시 준수)
+
+```
+1. 요구 사항 분석 - 요구 사항 및 현재 코드 상세 분석.
+2. 브랜치 분리 - 필요한 경우 origin/develop에서 브랜치 생성 (hotfix는 main)
+3. 테스트 작성 — 구현 전 실패하는 테스트 먼저 작성.
+4. 테스트 실패 확인 — ./gradlew test 로 실패 확인.
+5. 구현 — 테스트 통과를 위한 최소한의 코드 작성. 완료 후 린터 실행.
+6. 테스트 성공 확인 — ./gradlew test 로 전체 통과 확인.
+7. 커밋 & 푸시 — 통과 후 커밋 & 푸시.
+8. PR 생성 — origin/develop 대상으로 PR 생성.
+```
 
 ## Build & Run Commands
 
@@ -19,8 +33,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 # Run locally (requires MySQL + Redis running)
 ./gradlew :api:bootRun
-# or with explicit profile:
-./gradlew :api:bootRun --args='--spring.profiles.active=local'
 
 # Start local dev dependencies (MySQL + Redis)
 docker-compose up -d
@@ -30,12 +42,10 @@ Local services after startup:
 - API: `http://localhost:8080`
 - Swagger UI: `http://localhost:8080/swagger-ui.html`
 - Health: `http://localhost:8080/actuator/health`
-- Prometheus metrics: `http://localhost:8080/actuator/prometheus`
 
 ## Architecture
 
 Multi-module Gradle project (Java 21, Spring Boot 3.5.11). The `api` module is the only executable; the others are library JARs.
-
 Module dependency direction: `api` → `domain`, `infrastructure`, `common`. Lower modules do not depend on each other.
 
 ### Module Roles
@@ -45,31 +55,23 @@ Module dependency direction: `api` → `domain`, `infrastructure`, `common`. Low
 | `api` | Presentation | 외부 요청 처리 및 실행 | Controller, DTO (request/response), Security, Swagger, Config |
 | `domain` | Business | 핵심 비즈니스 로직 | Entity, Service (interface + impl), Repository interface, Domain Event |
 | `infrastructure` | Implementation | 기술적 세부 구현 (외부 연동) | JPA/Querydsl 구현체, Redis, Kafka, 외부 API, Mail, Config |
-| `common` | Shared | 전역 공용 유틸리티 | Exception (BusinessException, GlobalExceptionHandler), response 규격, util, constants |
+| `common` | Shared | 공용 유틸리티 | Exception (BusinessException, GlobalExceptionHandler), response 규격, util, constants |
 
 ### Package Structure
 
 ```
 kr.ac.kyonggi.api
-├── controller/
-├── service/          ← Application Service / Facade (domain+infra 조합)
-├── dto/
-│   ├── request/
-│   └── response/
-├── security/         ← CustomUserDetailsService 등
+├── [API명]/          ← API 인터페이스 및 구현체
 └── config/           ← SecurityConfig, SwaggerConfig 등
 
 kr.ac.kyonggi.domain
-├── entity/
-├── service/          ← Domain Service (순수 비즈니스 로직, DTO 미사용)
-├── repository/       ← Spring Data JPA interface
-└── exception/        ← 도메인 전용 예외 (선택)
+└── [도메인명]/        ← 도메인 로직
 
 kr.ac.kyonggi.infrastructure
-├── persistence/      ← Querydsl 구현체
+├── persistence/
 ├── external/         ← 외부 API 클라이언트
 ├── messaging/        ← Kafka, Redis Listener
-└── config/
+└── 기타 등등...
 
 kr.ac.kyonggi.common
 ├── exception/        ← BusinessException, GlobalExceptionHandler
@@ -97,7 +99,6 @@ Docker image uses `eclipse-temurin:21-jre-alpine` with `-Xmx400M` and `spring.pr
 
 ## Placement Rules
 
-When adding new code, follow these rules:
 - New JPA entities → `domain/entity/`
 - Repository interfaces (Spring Data JPA) → `domain/repository/`
 - Domain business logic → `domain/service/`
@@ -119,8 +120,8 @@ db/
 
 ### 규칙
 
-- `db/ddl.sql`은 직접 수정하지 않는다. 스키마 변경은 반드시 마이그레이션 파일로 작성한다.
-- 엔티티(`@Column`, `@Table` 등)를 변경할 때는 대응하는 마이그레이션 파일을 함께 추가한다.
+- `db/ddl.sql` 직접 수정 금지. 스키마 변경은 마이그레이션 파일로 작성.
+- 엔티티(`@Column`, `@Table` 등) 변경 시 대응하는 마이그레이션 파일 함께 추가.
 
 ### 마이그레이션 파일 생성
 
@@ -128,8 +129,7 @@ db/
 bash db/new-migration.sh
 ```
 
-스크립트 실행 시 당시 일시(초 단위)가 파일명에 자동 부여된 파일이 생성된다.
-변경 내용은 파일명이 아닌 파일 내부 주석으로 작성한다.
+실행 시 새 마이그레이션 파일 생성됨. 변경 내용은 파일명이 아닌 파일 내부 주석으로 작성.
 
 ### 네이밍 규칙
 
@@ -144,16 +144,16 @@ bash db/new-migration.sh
 
 ## Language
 
-- 모든 커밋 메시지, PR 제목/본문, 코드 주석은 **한국어**로 작성한다.
-- CLAUDE.md, 설정 파일 등 프로젝트 문서도 한국어를 기본으로 한다.
+- 모든 커밋 메시지, PR 제목/본문, 코드 주석은 **한국어**로 작성.
+- CLAUDE.md, 설정 파일 등 프로젝트 문서도 한국어 기본.
 
 ## Git Convention
 
 ### Branch Strategy (Git Flow)
 
-- `main` — 프로덕션 배포 브랜치. 직접 커밋하지 않는다.
-- `develop` — 개발 통합 브랜치. 모든 작업 브랜치는 여기서 분기하고 여기로 PR을 올린다.
-- 작업 브랜치는 반드시 `develop`에서 새로 생성한다.
+- `main` — 프로덕션 배포 브랜치. 직접 커밋 금지.
+- `develop` — 개발 통합 브랜치. 모든 작업 브랜치는 여기서 분기하고 여기로 PR.
+- 작업 브랜치는 반드시 `develop`에서 생성.
 
 | Prefix | 용도 | 예시 |
 |---|---|---|
@@ -179,12 +179,12 @@ bash db/new-migration.sh
 ```
 
 **주의사항:**
-- 현재 작업 중인 브랜치에 관계없는 변경을 커밋하지 않는다. 별도 작업은 항상 develop에서 새 브랜치를 만들어서 진행한다.
-- 하나의 브랜치에는 하나의 주제만 담는다.
+- 현재 브랜치와 관계없는 변경 커밋 금지. 별도 작업은 develop에서 새 브랜치 생성 후 진행.
+- 하나의 브랜치에는 하나의 주제만.
 
 ### Commit Message
 
-Conventional Commits 형식을 따른다:
+Conventional Commits 형식:
 
 ```
 <type>: <한국어 설명>
@@ -199,23 +199,10 @@ Conventional Commits 형식을 따른다:
 | `test` | 테스트 추가/수정 |
 | `docs` | 문서 변경 |
 
-- 커밋 메시지의 type은 브랜치 prefix와 일치시킨다 (예: `feat/` 브랜치 → `feat:` 커밋).
-- `Co-Authored-By` 트레일러를 추가하지 않는다.
+- 커밋 메시지 type은 브랜치 prefix와 일치 (예: `feat/` 브랜치 → `feat:` 커밋).
+- `Co-Authored-By` 트레일러 추가 금지.
 
 ### PR
 
-- 모든 PR의 base 브랜치는 `develop`이다 (`main`이 아님).
-- `develop` → `main` 머지는 릴리스 시점에만 수행한다.
-
-## 코드 작성 절차 (TDD)
-
-새 기능 개발 및 버그 수정 시 아래 순서를 따른다:
-
-```
-1. 테스트 작성 — 구현 전에 실패하는 테스트를 먼저 작성한다.
-2. 테스트 실패 확인 — ./gradlew test 로 테스트가 실패하는지 확인한다.
-3. 구현 — 테스트를 통과시키기 위한 최소한의 코드를 작성한다.
-4. 테스트 성공 확인 — ./gradlew test 로 모든 테스트가 통과하는지 확인한다.
-5. 커밋 & 푸시 — 테스트 통과 후 커밋하고 푸시한다.
-6. PR 생성 — develop 대상으로 PR을 올린다.
-```
+- 모든 PR의 base 브랜치는 `origin/develop` (`main` 아님).
+- `develop` → `main` 머지는 릴리스 시점에만.
