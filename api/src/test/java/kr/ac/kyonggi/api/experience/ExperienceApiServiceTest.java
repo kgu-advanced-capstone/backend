@@ -137,24 +137,24 @@ class ExperienceApiServiceTest {
     // ── summarize() ───────────────────────────────────────────────────
 
     @Test
-    @DisplayName("summarize()는 본인 경험에 AI 요약을 생성하고 AiSummaryResponse를 반환한다")
+    @DisplayName("summarize()는 본인 경험에 AI 키포인트를 생성하고 AiSummaryResponse를 반환한다")
     void summarize_generatesAiSummary_forOwner() {
         given(userService.getByEmail(EMAIL)).willReturn(user);
         given(experienceService.getById(100L)).willReturn(experience);
         given(projectService.getById(PROJECT_ID)).willReturn(project);
-        given(experienceSummarizer.summarize(
+        given(experienceSummarizer.generateKeyPoints(
                 project.getTitle(),
                 project.getDescription(),
                 project.getCategory(),
                 project.getSkills(),
                 experience.getContent()
-        )).willReturn("JWT 기반 로그인 인증 시스템 구축");
+        )).willReturn(List.of("JWT 기반 로그인 인증 시스템 구축", "Spring Security 적용"));
         given(experienceService.save(any(Experience.class))).willAnswer(inv -> inv.getArgument(0));
 
         AiSummaryResponse result = experienceApiService.summarize(100L, EMAIL);
 
         assertThat(result.id()).isEqualTo(100L);
-        assertThat(result.aiSummary()).isEqualTo("JWT 기반 로그인 인증 시스템 구축");
+        assertThat(result.aiSummary()).isEqualTo("JWT 기반 로그인 인증 시스템 구축\nSpring Security 적용");
     }
 
     @Test

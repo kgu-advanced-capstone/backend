@@ -3,10 +3,12 @@ package kr.ac.kyonggi.api.resume;
 import kr.ac.kyonggi.api.resume.dto.ResumeResponse;
 import kr.ac.kyonggi.common.exception.ResumeNotFoundException;
 import kr.ac.kyonggi.domain.experience.Experience;
+import kr.ac.kyonggi.domain.experience.ExperienceCreateCommand;
 import kr.ac.kyonggi.domain.experience.ExperienceService;
 import kr.ac.kyonggi.domain.project.Project;
 import kr.ac.kyonggi.domain.project.ProjectMember;
 import kr.ac.kyonggi.domain.project.ProjectService;
+import kr.ac.kyonggi.domain.project.ProjectStatus;
 import kr.ac.kyonggi.domain.resume.Resume;
 import kr.ac.kyonggi.domain.resume.ResumedExperience;
 import kr.ac.kyonggi.domain.resume.ResumedExperienceRepository;
@@ -63,6 +65,7 @@ public class ResumeApiService {
 
         List<ResumedExperience> experiences = memberships.stream()
                 .filter(member -> projectMap.containsKey(member.getProjectId()))
+                .filter(member -> projectMap.get(member.getProjectId()).getStatus() != ProjectStatus.RECRUITING)
                 .map(member -> {
                     Project project = projectMap.get(member.getProjectId());
                     Experience experience = experienceMap.get(project.getId());
@@ -79,10 +82,10 @@ public class ResumeApiService {
                                 project.getSkills(),
                                 experienceContent
                         );
-                        if (experience != null) {
-                            experience.updateAiSummary(String.join("\n", keyPoints));
-                            experienceService.save(experience);
-                        }
+                        Experience expToUpdate = experience != null ? experience
+                                : Experience.create(new ExperienceCreateCommand(userId, project.getId(), ""));
+                        expToUpdate.updateAiSummary(String.join("\n", keyPoints));
+                        experienceService.save(expToUpdate);
                     }
                     return ResumedExperience.of(savedResume.getId(), project.getId(), project.getTitle(), keyPoints);
                 })

@@ -73,6 +73,19 @@ class ProjectServiceImplTest {
         assertThat(projectRepository.findById(saved.getId())).isPresent();
     }
 
+    @Test
+    @DisplayName("create()는 작성자(authorId)를 ProjectMember로 자동 추가한다")
+    void create_autoAddsAuthorAsMember() {
+        Project newProject = Project.create(new ProjectCreateCommand(
+                "새 프로젝트", "설명", "프론트엔드", List.of("React"), 3,
+                LocalDate.of(2026, 12, 31), 1L
+        ));
+
+        Project saved = projectService.create(newProject);
+
+        assertThat(projectMemberRepository.existsByProjectIdAndUserId(saved.getId(), 1L)).isTrue();
+    }
+
     // ── getById() ─────────────────────────────────────────────────────
 
     @Test
