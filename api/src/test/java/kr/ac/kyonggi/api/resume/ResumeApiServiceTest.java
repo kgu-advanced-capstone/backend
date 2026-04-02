@@ -10,6 +10,7 @@ import kr.ac.kyonggi.domain.project.ProjectCreateCommand;
 import kr.ac.kyonggi.domain.project.ProjectMember;
 import kr.ac.kyonggi.domain.project.ProjectMemberCreateCommand;
 import kr.ac.kyonggi.domain.project.ProjectService;
+import kr.ac.kyonggi.domain.project.ProjectStatus;
 import kr.ac.kyonggi.domain.resume.Resume;
 import kr.ac.kyonggi.domain.resume.ResumedExperience;
 import kr.ac.kyonggi.domain.resume.ResumedExperienceRepository;
@@ -70,6 +71,7 @@ class ResumeApiServiceTest {
                 "테스트 프로젝트", "프로젝트 설명", "백엔드", List.of("Java", "Spring"), 4,
                 LocalDate.of(2026, 12, 31), USER_ID
         ));
+        project.updateStatus(ProjectStatus.IN_PROGRESS);
         ReflectionTestUtils.setField(project, "id", PROJECT_ID);
 
         member = ProjectMember.of(new ProjectMemberCreateCommand(PROJECT_ID, USER_ID));
@@ -135,7 +137,7 @@ class ResumeApiServiceTest {
     }
 
     @Test
-    @DisplayName("generate()는 경험 기록이 없으면 content를 null로 AI를 호출한다")
+    @DisplayName("generate()는 경험 기록이 없으면 content를 null로 AI를 호출하고 새 Experience에 저장한다")
     void generate_passesNullContent_toAiClient_whenNoExperience() {
         given(userService.getByEmail(EMAIL)).willReturn(user);
         given(projectService.getMembershipsOf(USER_ID)).willReturn(List.of(member));
@@ -150,6 +152,7 @@ class ResumeApiServiceTest {
             ReflectionTestUtils.setField(r, "id", 1L);
             return r;
         });
+        given(experienceService.save(any())).willAnswer(inv -> inv.getArgument(0));
 
         resumeApiService.generate(EMAIL);
 
@@ -157,6 +160,7 @@ class ResumeApiServiceTest {
                 "테스트 프로젝트", "프로젝트 설명", "백엔드",
                 List.of("Java", "Spring"), null
         );
+        verify(experienceService).save(any());
     }
 
     @Test
@@ -260,6 +264,35 @@ class ResumeApiServiceTest {
         verify(experienceSummarizer).generateKeyPoints(any(), any(), any(), any(), any());
         verify(experienceService).save(experience);
         assertThat(experience.getAiSummary()).isEqualTo("새 포인트1\n새 포인트2");
+    }
+
+    @Test
+    @DisplayName("generate()는 RECRUITING 상태 프로젝트를 이력서에서 제외한다")
+    void generate_excludesRecruitingProjects() {
+        Project recruitingProject = Project.create(new ProjectCreateCommand(
+                "모집 중 프로젝트", "설명", "백엔드", List.of("Java"), 4,
+                LocalDate.of(2026, 12, 31), USER_ID
+        )); // 기본 상태 = RECRUITING
+        ReflectionTestUtils.setField(recruitingProject, "id", PROJECT_ID);
+
+        given(userService.getByEmail(EMAIL)).willReturn(user);
+        given(projectService.getMembershipsOf(USER_ID)).willReturn(List.of(member));
+        given(projectService.getAllByIds(List.of(PROJECT_ID))).willReturn(List.of(recruitingProject));
+        given(experienceService.findByProjectIdsAndUserId(List.of(PROJECT_ID), USER_ID))
+                .willReturn(Map.of());
+        given(resumeService.findByUserId(USER_ID)).willReturn(Optional.empty());
+        given(resumeService.save(any(Resume.class))).willAnswer(inv -> {
+            Resume r = inv.getArgument(0);
+            ReflectionTestUtils.setField(r, "id", 1L);
+            return r;
+        });
+
+        resumeApiService.generate(EMAIL);
+
+        ArgumentCaptor<List<ResumedExperience>> captor = ArgumentCaptor.forClass(List.class);
+        verify(resumedExperienceRepository).saveAll(captor.capture());
+        assertThat(captor.getValue()).isEmpty();
+        verify(experienceSummarizer, never()).generateKeyPoints(any(), any(), any(), any(), any());
     }
 
     @Test
