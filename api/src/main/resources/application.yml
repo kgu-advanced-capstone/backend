@@ -35,9 +35,15 @@ cloud:
       auto: false
 
 storage:
+<<<<<<< feature/setup-s3AndSentry
   s3:
     bucket: ${SUPABASE_S3_BUCKET}
     endpoint: ${SUPABASE_S3_ENDPOINT}
+=======
+  local:
+    root-dir: ./uploads
+    base-url: http://pcserver.cloud/files
+>>>>>>> develop
 
 server:
   servlet:

@@ -9,7 +9,12 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
  */
 @ConfigurationProperties(prefix = "storage.s3")
 public record StorageProperties(
+<<<<<<< feature/setup-s3AndSentry
         String bucket,
         String endpoint
+=======
+        @DefaultValue("./uploads") String rootDir,
+        @DefaultValue("http://pcserver.cloud/files") String baseUrl
+>>>>>>> develop
 ) {
 }

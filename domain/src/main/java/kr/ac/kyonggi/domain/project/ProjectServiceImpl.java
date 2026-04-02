@@ -24,7 +24,9 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     @Transactional
     public Project create(Project project) {
-        return projectRepository.save(project);
+        Project saved = projectRepository.save(project);
+        projectMemberRepository.save(ProjectMember.of(new ProjectMemberCreateCommand(saved.getId(), saved.getAuthorId())));
+        return saved;
     }
 
     @Override
@@ -86,5 +88,15 @@ public class ProjectServiceImpl implements ProjectService {
     public Map<Long, Long> getMemberCounts(List<Long> projectIds) {
         return projectMemberRepository.findByProjectIdIn(projectIds).stream()
                 .collect(Collectors.groupingBy(ProjectMember::getProjectId, Collectors.counting()));
+    }
+
+    @Override
+    public List<ProjectMember> getParticipants(Long projectId) {
+        return projectMemberRepository.findByProjectId(projectId);
+    }
+
+    @Override
+    public List<ProjectMember> getParticipantsByProjectIds(List<Long> projectIds) {
+        return projectMemberRepository.findByProjectIdIn(projectIds);
     }
 }

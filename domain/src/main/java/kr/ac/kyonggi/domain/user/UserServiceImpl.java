@@ -41,6 +41,11 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public List<User> getAllByIds(List<Long> ids) {
+        return userRepository.findAllById(ids);
+    }
+
+    @Override
     public boolean isEmailTaken(String email) {
         return userRepository.existsByEmail(email);
     }

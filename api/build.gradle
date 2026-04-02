@@ -1,6 +1,18 @@
 bootJar.enabled=true
 jar.enabled=false
 
+jacocoTestReport {
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: [
+                '**/dto/**',
+                '**/config/**',
+                '**/*Application*',
+            ])
+        }))
+    }
+}
+
 dependencies {
     implementation project(':domain')
     implementation project(':infrastructure')

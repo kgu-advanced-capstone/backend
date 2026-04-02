@@ -3,10 +3,12 @@ package kr.ac.kyonggi.api.resume;
 import kr.ac.kyonggi.api.resume.dto.ResumeResponse;
 import kr.ac.kyonggi.common.exception.ResumeNotFoundException;
 import kr.ac.kyonggi.domain.experience.Experience;
+import kr.ac.kyonggi.domain.experience.ExperienceCreateCommand;
 import kr.ac.kyonggi.domain.experience.ExperienceService;
 import kr.ac.kyonggi.domain.project.Project;
 import kr.ac.kyonggi.domain.project.ProjectMember;
 import kr.ac.kyonggi.domain.project.ProjectService;
+import kr.ac.kyonggi.domain.project.ProjectStatus;
 import kr.ac.kyonggi.domain.resume.Resume;
 import kr.ac.kyonggi.domain.resume.ResumedExperience;
 import kr.ac.kyonggi.domain.resume.ResumedExperienceRepository;
@@ -20,7 +22,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -64,18 +65,28 @@ public class ResumeApiService {
 
         List<ResumedExperience> experiences = memberships.stream()
                 .filter(member -> projectMap.containsKey(member.getProjectId()))
+                .filter(member -> projectMap.get(member.getProjectId()).getStatus() != ProjectStatus.RECRUITING)
                 .map(member -> {
                     Project project = projectMap.get(member.getProjectId());
-                    String experienceContent = Optional.ofNullable(experienceMap.get(project.getId()))
-                            .map(Experience::getContent)
-                            .orElse(null);
-                    List<String> keyPoints = experienceSummarizer.generateKeyPoints(
-                            project.getTitle(),
-                            project.getDescription(),
-                            project.getCategory(),
-                            project.getSkills(),
-                            experienceContent
-                    );
+                    Experience experience = experienceMap.get(project.getId());
+                    String experienceContent = experience != null ? experience.getContent() : null;
+
+                    List<String> keyPoints;
+                    if (experience != null && experience.getAiSummary() != null && !experience.getAiSummary().isBlank()) {
+                        keyPoints = List.of(experience.getAiSummary().split("\n"));
+                    } else {
+                        keyPoints = experienceSummarizer.generateKeyPoints(
+                                project.getTitle(),
+                                project.getDescription(),
+                                project.getCategory(),
+                                project.getSkills(),
+                                experienceContent
+                        );
+                        Experience expToUpdate = experience != null ? experience
+                                : Experience.create(new ExperienceCreateCommand(userId, project.getId(), ""));
+                        expToUpdate.updateAiSummary(String.join("\n", keyPoints));
+                        experienceService.save(expToUpdate);
+                    }
                     return ResumedExperience.of(savedResume.getId(), project.getId(), project.getTitle(), keyPoints);
                 })
                 .toList();

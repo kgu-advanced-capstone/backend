@@ -21,7 +21,11 @@ subprojects {
     apply plugin: 'java-library'
     apply plugin: 'org.springframework.boot'
     apply plugin: 'io.spring.dependency-management'
+<<<<<<< feature/setup-s3AndSentry
     apply plugin: 'io.sentry.jvm.gradle'
+=======
+    apply plugin: 'jacoco'
+>>>>>>> develop
 
     configurations {
         compileOnly {
@@ -54,6 +58,19 @@ subprojects {
 
     test {
         useJUnitPlatform()
+        finalizedBy jacocoTestReport
+    }
+
+    jacoco {
+        toolVersion = '0.8.12'
+    }
+
+    jacocoTestReport {
+        reports {
+            html.required = true
+            xml.required = true
+            csv.required = false
+        }
     }
 
 
