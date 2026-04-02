@@ -16,25 +16,28 @@ spring:
         generate_statistics: true
         format_sql: true
 
+  autoconfigure:
+    exclude:
+      - io.awspring.cloud.autoconfigure.s3.S3AutoConfiguration
 
-  cloud:
-    aws:
-      s3:
-        endpoint: ${SUPABASE_S3_ENDPOINT}
-        path-style-access-enabled: true
-      region:
-        static: ${SUPABASE_S3_REGION:ap-southeast-1}
-        auto: false
-      credentials:
-        access-key: ${SUPABASE_S3_ACCESS_KEY}
-        secret-key: ${SUPABASE_S3_SECRET_KEY}
-      stack:
-        auto: false
+cloud:
+  aws:
+    s3:
+      endpoint: ${SUPABASE_S3_ENDPOINT}
+      path-style-access-enabled: true
+    region:
+      static: ${SUPABASE_S3_REGION:ap-southeast-1}
+      auto: false
+    credentials:
+      access-key: ${SUPABASE_S3_ACCESS_KEY}
+      secret-key: ${SUPABASE_S3_SECRET_KEY}
+    stack:
+      auto: false
 
 storage:
   s3:
-   bucket: ${SUPABASE_S3_BUCKET}
-
+    bucket: ${SUPABASE_S3_BUCKET}
+    endpoint: ${SUPABASE_S3_ENDPOINT}
 
 server:
   servlet:
