@@ -87,4 +87,14 @@ public class ProjectServiceImpl implements ProjectService {
         return projectMemberRepository.findByProjectIdIn(projectIds).stream()
                 .collect(Collectors.groupingBy(ProjectMember::getProjectId, Collectors.counting()));
     }
+
+    @Override
+    public List<ProjectMember> getParticipants(Long projectId) {
+        return projectMemberRepository.findByProjectId(projectId);
+    }
+
+    @Override
+    public List<ProjectMember> getParticipantsByProjectIds(List<Long> projectIds) {
+        return projectMemberRepository.findByProjectIdIn(projectIds);
+    }
 }

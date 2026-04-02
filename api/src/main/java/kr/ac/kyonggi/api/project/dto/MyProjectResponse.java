@@ -7,6 +7,7 @@ import kr.ac.kyonggi.domain.project.ProjectMember;
 import kr.ac.kyonggi.domain.project.ProjectStatus;
 
 import java.time.LocalDate;
+import java.util.List;
 
 public record MyProjectResponse(
         @Schema(description = "프로젝트 상세 정보")
@@ -24,9 +25,9 @@ public record MyProjectResponse(
 ) {
     public static MyProjectResponse from(
             Project project, ProjectMember member, Long currentUserId,
-            long memberCount, String authorName) {
+            List<ParticipantResponse> participants, String authorName) {
         return new MyProjectResponse(
-                ProjectDetailResponse.from(project, memberCount, authorName),
+                ProjectDetailResponse.from(project, participants, authorName),
                 member.getJoinedAt() != null ? member.getJoinedAt().toLocalDate() : null,
                 project.getStatus(),
                 project.isAuthor(currentUserId)

@@ -181,4 +181,19 @@ class ProjectServiceImplTest {
         assertThat(memberships).hasSize(1);
         assertThat(memberships.get(0).getProjectId()).isEqualTo(project.getId());
     }
+
+    // ── getParticipants() ─────────────────────────────────────────────
+
+    @Test
+    @DisplayName("getParticipants()는 해당 프로젝트의 ProjectMember 목록을 반환한다")
+    void getParticipants_returnsProjectMembers() {
+        projectService.apply(project.getId(), 2L);
+        projectService.apply(project.getId(), 3L);
+
+        List<ProjectMember> participants = projectService.getParticipants(project.getId());
+
+        assertThat(participants).hasSize(2);
+        assertThat(participants).extracting(ProjectMember::getProjectId)
+                .containsOnly(project.getId());
+    }
 }
