@@ -12,6 +12,6 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
 @ConfigurationProperties(prefix = "storage.local")
 public record StorageProperties(
         @DefaultValue("./uploads") String rootDir,
-        @DefaultValue("http://localhost:8080/files") String baseUrl
+        @DefaultValue("http://pcserver.cloud/files") String baseUrl
 ) {
 }
