@@ -65,13 +65,14 @@ public class ExperienceApiService {
 
         Project project = projectService.getById(experience.getProjectId());
 
-        String summary = experienceSummarizer.summarize(
+        List<String> keyPoints = experienceSummarizer.generateKeyPoints(
                 project.getTitle(),
                 project.getDescription(),
                 project.getCategory(),
                 project.getSkills(),
                 experience.getContent()
         );
+        String summary = String.join("\n", keyPoints);
 
         experience.updateAiSummary(summary);
         experienceService.save(experience);
