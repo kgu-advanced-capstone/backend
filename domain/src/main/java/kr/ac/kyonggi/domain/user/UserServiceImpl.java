@@ -47,6 +47,14 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
+    public User findOrCreateSocialUser(UserSocialCreateCommand command) {
+        return userRepository
+                .findByProviderIdAndProvider(command.providerId(), command.provider())
+                .orElseGet(() -> userRepository.save(User.ofSocial(command)));
+    }
+
+    @Override
+    @Transactional
     public User updateProfile(Long userId, UpdateProfileCommand command) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("사용자를 찾을 수 없습니다: " + userId));
