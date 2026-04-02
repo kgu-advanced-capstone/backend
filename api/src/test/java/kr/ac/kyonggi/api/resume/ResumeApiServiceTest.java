@@ -209,6 +209,60 @@ class ResumeApiServiceTest {
     }
 
     @Test
+    @DisplayName("generate()는 aiSummary가 저장된 경험 기록이면 AI를 호출하지 않고 저장된 요약을 사용한다")
+    void generate_usesStoredAiSummary_whenExperienceHasAiSummary() {
+        Experience experience = Experience.create(
+                new ExperienceCreateCommand(USER_ID, PROJECT_ID, "로그인 기능을 구현했습니다."));
+        experience.updateAiSummary("기존 포인트1\n기존 포인트2");
+
+        given(userService.getByEmail(EMAIL)).willReturn(user);
+        given(projectService.getMembershipsOf(USER_ID)).willReturn(List.of(member));
+        given(projectService.getAllByIds(List.of(PROJECT_ID))).willReturn(List.of(project));
+        given(experienceService.findByProjectIdsAndUserId(List.of(PROJECT_ID), USER_ID))
+                .willReturn(Map.of(PROJECT_ID, experience));
+        given(resumeService.findByUserId(USER_ID)).willReturn(Optional.empty());
+        given(resumeService.save(any(Resume.class))).willAnswer(inv -> {
+            Resume r = inv.getArgument(0);
+            ReflectionTestUtils.setField(r, "id", 1L);
+            return r;
+        });
+
+        resumeApiService.generate(EMAIL);
+
+        verify(experienceSummarizer, never()).generateKeyPoints(any(), any(), any(), any(), any());
+        ArgumentCaptor<List<ResumedExperience>> captor = ArgumentCaptor.forClass(List.class);
+        verify(resumedExperienceRepository).saveAll(captor.capture());
+        assertThat(captor.getValue().get(0).getKeyPoints()).containsExactly("기존 포인트1", "기존 포인트2");
+    }
+
+    @Test
+    @DisplayName("generate()는 aiSummary가 없는 경험 기록이면 AI를 호출하고 결과를 경험 기록에 저장한다")
+    void generate_callsAiAndSavesAiSummary_whenExperienceHasNoAiSummary() {
+        Experience experience = Experience.create(
+                new ExperienceCreateCommand(USER_ID, PROJECT_ID, "로그인 기능을 구현했습니다."));
+
+        given(userService.getByEmail(EMAIL)).willReturn(user);
+        given(projectService.getMembershipsOf(USER_ID)).willReturn(List.of(member));
+        given(projectService.getAllByIds(List.of(PROJECT_ID))).willReturn(List.of(project));
+        given(experienceService.findByProjectIdsAndUserId(List.of(PROJECT_ID), USER_ID))
+                .willReturn(Map.of(PROJECT_ID, experience));
+        given(experienceSummarizer.generateKeyPoints(any(), any(), any(), any(), any()))
+                .willReturn(List.of("새 포인트1", "새 포인트2"));
+        given(resumeService.findByUserId(USER_ID)).willReturn(Optional.empty());
+        given(resumeService.save(any(Resume.class))).willAnswer(inv -> {
+            Resume r = inv.getArgument(0);
+            ReflectionTestUtils.setField(r, "id", 1L);
+            return r;
+        });
+
+        resumeApiService.generate(EMAIL);
+
+        verify(experienceSummarizer).generateKeyPoints(any(), any(), any(), any(), any());
+        verify(experienceService).save(experience);
+        assertThat(experience.getAiSummary()).isEqualTo("새 포인트1\n새 포인트2");
+    }
+
+    @Test
     @DisplayName("generate()는 참가 프로젝트가 없으면 빈 experiences로 저장한다")
     void generate_emptyMemberships_savesResumeWithNoExperiences() {
         given(userService.getByEmail(EMAIL)).willReturn(user);
