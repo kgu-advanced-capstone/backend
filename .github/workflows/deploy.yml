@@ -45,6 +45,8 @@ jobs:
           run: |
             chmod +x gradlew
             ./gradlew clean :api:bootJar -x test
+          env:
+            SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
 
         # 3. 도커 로그인
         - name: Login to Docker Hub
@@ -75,6 +77,10 @@ jobs:
               echo "DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}" >> .env
               echo "GCLOUD_RW_API_KEY=${{ secrets.GCLOUD_RW_API_KEY }}" >> .env  # grafana alloy api 키
               echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> .env
+              echo "SUPABASE_S3_ENDPOINT=${{ secrets.SUPABASE_S3_ENDPOINT }}" >> .env
+              echo "SUPABASE_S3_ACCESS_KEY=${{ secrets.SUPABASE_S3_ACCESS_KEY }}" >> .env
+              echo "SUPABASE_S3_SECRET_KEY=${{ secrets.SUPABASE_S3_SECRET_KEY }}" >> .env
+              echo "SUPABASE_S3_BUCKET=${{ secrets.SUPABASE_S3_BUCKET }}" >> .env
               docker compose pull
               docker compose up -d
               docker image prune -f
