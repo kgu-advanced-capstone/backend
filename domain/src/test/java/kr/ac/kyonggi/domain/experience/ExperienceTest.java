@@ -51,4 +51,49 @@ class ExperienceTest {
 
         assertThat(experience.getAiSummary()).isEqualTo("JWT를 활용한 보안 인증 시스템 구축");
     }
+
+    @Test
+    @DisplayName("create() 직후 aiSummaryStatus는 NONE이다")
+    void create_initialAiSummaryStatusIsNone() {
+        Experience experience = Experience.create(
+                new ExperienceCreateCommand(USER_ID, PROJECT_ID, "내용"));
+
+        assertThat(experience.getAiSummaryStatus()).isEqualTo(AiSummaryStatus.NONE);
+    }
+
+    @Test
+    @DisplayName("startSummarizing()을 호출하면 상태가 IN_PROGRESS로 변경된다")
+    void startSummarizing_setsStatusToInProgress() {
+        Experience experience = Experience.create(
+                new ExperienceCreateCommand(USER_ID, PROJECT_ID, "내용"));
+
+        experience.startSummarizing();
+
+        assertThat(experience.getAiSummaryStatus()).isEqualTo(AiSummaryStatus.IN_PROGRESS);
+    }
+
+    @Test
+    @DisplayName("completeSummarizing()을 호출하면 상태가 COMPLETED로 변경되고 요약이 저장된다")
+    void completeSummarizing_setsStatusAndSummary() {
+        Experience experience = Experience.create(
+                new ExperienceCreateCommand(USER_ID, PROJECT_ID, "내용"));
+        experience.startSummarizing();
+
+        experience.completeSummarizing("포인트1\n포인트2");
+
+        assertThat(experience.getAiSummaryStatus()).isEqualTo(AiSummaryStatus.COMPLETED);
+        assertThat(experience.getAiSummary()).isEqualTo("포인트1\n포인트2");
+    }
+
+    @Test
+    @DisplayName("failSummarizing()을 호출하면 상태가 FAILED로 변경된다")
+    void failSummarizing_setsStatusToFailed() {
+        Experience experience = Experience.create(
+                new ExperienceCreateCommand(USER_ID, PROJECT_ID, "내용"));
+        experience.startSummarizing();
+
+        experience.failSummarizing();
+
+        assertThat(experience.getAiSummaryStatus()).isEqualTo(AiSummaryStatus.FAILED);
+    }
 }

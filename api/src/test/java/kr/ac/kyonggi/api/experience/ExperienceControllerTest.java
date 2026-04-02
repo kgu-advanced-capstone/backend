@@ -2,8 +2,9 @@ package kr.ac.kyonggi.api.experience;
 
 import kr.ac.kyonggi.api.auth.AuthApiService;
 import kr.ac.kyonggi.api.config.SecurityConfig;
-import kr.ac.kyonggi.api.experience.dto.AiSummaryResponse;
+import kr.ac.kyonggi.api.experience.dto.AiSummaryStatusResponse;
 import kr.ac.kyonggi.api.experience.dto.ExperienceResponse;
+import kr.ac.kyonggi.domain.experience.AiSummaryStatus;
 import kr.ac.kyonggi.api.security.CustomUserDetailsService;
 import kr.ac.kyonggi.api.security.LoginSuccessHandler;
 import kr.ac.kyonggi.common.exception.ExperienceNotFoundException;
@@ -145,22 +146,33 @@ class ExperienceControllerTest {
 
     @Test
     @WithMockUser(username = EMAIL)
-    @DisplayName("POST /api/experiences/{id}/summarize - 본인 경험이면 200 및 AI 요약 반환")
-    void summarize_owner_returns200WithAiSummary() {
-        when(experienceApiService.summarize(eq(100L), eq(EMAIL)))
-                .thenReturn(new AiSummaryResponse(100L, "JWT 기반 로그인 인증 시스템 구축"));
+    @DisplayName("POST /api/experiences/{id}/summarize - 요약 시작 성공 시 202 반환")
+    void startSummarize_owner_returns202() {
+        when(experienceApiService.startSummarize(eq(100L), eq(EMAIL)))
+                .thenReturn(new AiSummaryStatusResponse(100L, AiSummaryStatus.IN_PROGRESS, null));
 
         assertThat(mockMvc.post().uri("/api/experiences/100/summarize"))
-                .hasStatus(HttpStatus.OK)
+                .hasStatus(HttpStatus.ACCEPTED)
                 .bodyJson()
-                .extractingPath("$.aiSummary").asString().isEqualTo("JWT 기반 로그인 인증 시스템 구축");
+                .extractingPath("$.status").asString().isEqualTo("IN_PROGRESS");
+    }
+
+    @Test
+    @WithMockUser(username = EMAIL)
+    @DisplayName("POST /api/experiences/{id}/summarize - 이미 진행 중이면 409 반환")
+    void startSummarize_alreadyInProgress_returns409() {
+        when(experienceApiService.startSummarize(eq(100L), eq(EMAIL)))
+                .thenThrow(new kr.ac.kyonggi.common.exception.SummarizeAlreadyInProgressException("이미 요약이 진행 중입니다."));
+
+        assertThat(mockMvc.post().uri("/api/experiences/100/summarize"))
+                .hasStatus(HttpStatus.CONFLICT);
     }
 
     @Test
     @WithMockUser(username = EMAIL)
     @DisplayName("POST /api/experiences/{id}/summarize - 본인 경험이 아니면 403 반환")
-    void summarize_nonOwner_returns403() {
-        when(experienceApiService.summarize(eq(100L), eq(EMAIL)))
+    void startSummarize_nonOwner_returns403() {
+        when(experienceApiService.startSummarize(eq(100L), eq(EMAIL)))
                 .thenThrow(new ForbiddenException("본인의 경험 기록만 요약할 수 있습니다."));
 
         assertThat(mockMvc.post().uri("/api/experiences/100/summarize"))
@@ -169,9 +181,22 @@ class ExperienceControllerTest {
 
     @Test
     @WithMockUser(username = EMAIL)
+    @DisplayName("GET /api/experiences/{id}/summarize - 요약 상태 조회 성공 시 200 반환")
+    void getSummaryStatus_returns200() {
+        when(experienceApiService.getSummaryStatus(eq(100L), eq(EMAIL)))
+                .thenReturn(new AiSummaryStatusResponse(100L, AiSummaryStatus.COMPLETED, "포인트1\n포인트2"));
+
+        assertThat(mockMvc.get().uri("/api/experiences/100/summarize"))
+                .hasStatus(HttpStatus.OK)
+                .bodyJson()
+                .extractingPath("$.status").asString().isEqualTo("COMPLETED");
+    }
+
+    @Test
+    @WithMockUser(username = EMAIL)
     @DisplayName("POST /api/experiences/{id}/summarize - 경험이 없으면 404 반환")
-    void summarize_notFound_returns404() {
-        when(experienceApiService.summarize(eq(999L), eq(EMAIL)))
+    void startSummarize_notFound_returns404() {
+        when(experienceApiService.startSummarize(eq(999L), eq(EMAIL)))
                 .thenThrow(new ExperienceNotFoundException("경험 기록을 찾을 수 없습니다: 999"));
 
         assertThat(mockMvc.post().uri("/api/experiences/999/summarize"))

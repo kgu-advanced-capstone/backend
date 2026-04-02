@@ -1,10 +1,11 @@
 package kr.ac.kyonggi.api.experience;
 
 import jakarta.validation.Valid;
-import kr.ac.kyonggi.api.experience.dto.AiSummaryResponse;
+import kr.ac.kyonggi.api.experience.dto.AiSummaryStatusResponse;
 import kr.ac.kyonggi.api.experience.dto.ExperienceRequest;
 import kr.ac.kyonggi.api.experience.dto.ExperienceResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -44,12 +45,21 @@ public class ExperienceController implements ExperienceApi {
     }
 
     @PostMapping("/{id}/summarize")
-    public ResponseEntity<AiSummaryResponse> summarize(
+    public ResponseEntity<AiSummaryStatusResponse> startSummarize(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        return ResponseEntity.status(HttpStatus.ACCEPTED)
+                .body(experienceApiService.startSummarize(id, userDetails.getUsername()));
+    }
+
+    @GetMapping("/{id}/summarize")
+    public ResponseEntity<AiSummaryStatusResponse> getSummaryStatus(
             @PathVariable Long id,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
         return ResponseEntity.ok(
-                experienceApiService.summarize(id, userDetails.getUsername())
+                experienceApiService.getSummaryStatus(id, userDetails.getUsername())
         );
     }
 }

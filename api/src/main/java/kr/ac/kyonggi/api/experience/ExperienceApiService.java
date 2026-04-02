@@ -1,18 +1,17 @@
 package kr.ac.kyonggi.api.experience;
 
-import kr.ac.kyonggi.api.experience.dto.AiSummaryResponse;
+import kr.ac.kyonggi.api.experience.dto.AiSummaryStatusResponse;
 import kr.ac.kyonggi.api.experience.dto.ExperienceRequest;
 import kr.ac.kyonggi.api.experience.dto.ExperienceResponse;
 import kr.ac.kyonggi.common.exception.ForbiddenException;
+import kr.ac.kyonggi.common.exception.SummarizeAlreadyInProgressException;
 import kr.ac.kyonggi.domain.experience.Experience;
 import kr.ac.kyonggi.domain.experience.ExperienceCreateCommand;
 import kr.ac.kyonggi.domain.experience.ExperienceService;
-import kr.ac.kyonggi.domain.project.Project;
 import kr.ac.kyonggi.domain.project.ProjectMemberRepository;
 import kr.ac.kyonggi.domain.project.ProjectService;
 import kr.ac.kyonggi.domain.user.User;
 import kr.ac.kyonggi.domain.user.UserService;
-import kr.ac.kyonggi.domain.experience.ExperienceSummarizer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,7 +27,7 @@ public class ExperienceApiService {
     private final ProjectService projectService;
     private final UserService userService;
     private final ProjectMemberRepository projectMemberRepository;
-    private final ExperienceSummarizer experienceSummarizer;
+    private final ExperienceSummarizeTask experienceSummarizeTask;
 
     public List<ExperienceResponse> getByProject(Long projectId, String email) {
         User user = userService.getByEmail(email);
@@ -55,29 +54,34 @@ public class ExperienceApiService {
     }
 
     @Transactional
-    public AiSummaryResponse summarize(Long id, String email) {
+    public AiSummaryStatusResponse startSummarize(Long id, String email) {
         User user = userService.getByEmail(email);
         Experience experience = experienceService.getById(id);
 
         if (!experience.getUserId().equals(user.getId())) {
             throw new ForbiddenException("본인의 경험 기록만 요약할 수 있습니다.");
         }
+        if (experience.isSummarizing()) {
+            throw new SummarizeAlreadyInProgressException("이미 요약이 진행 중입니다.");
+        }
 
-        Project project = projectService.getById(experience.getProjectId());
-
-        List<String> keyPoints = experienceSummarizer.generateKeyPoints(
-                project.getTitle(),
-                project.getDescription(),
-                project.getCategory(),
-                project.getSkills(),
-                experience.getContent()
-        );
-        String summary = String.join("\n", keyPoints);
-
-        experience.updateAiSummary(summary);
+        experience.startSummarizing();
         experienceService.save(experience);
 
-        return AiSummaryResponse.from(experience);
+        experienceSummarizeTask.run(experience.getId(), experience.getProjectId());
+
+        return AiSummaryStatusResponse.from(experience);
+    }
+
+    public AiSummaryStatusResponse getSummaryStatus(Long id, String email) {
+        User user = userService.getByEmail(email);
+        Experience experience = experienceService.getById(id);
+
+        if (!experience.getUserId().equals(user.getId())) {
+            throw new ForbiddenException("본인의 경험 기록만 조회할 수 있습니다.");
+        }
+
+        return AiSummaryStatusResponse.from(experience);
     }
 
     private void verifyMembership(Long projectId, Long userId) {
