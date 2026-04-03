@@ -73,6 +73,7 @@ public interface ExperienceApi {
             @ApiResponse(responseCode = "202", description = "요약 시작됨",
                     content = @Content(schema = @Schema(implementation = AiSummaryStatusResponse.class))),
             @ApiResponse(responseCode = "401", description = "인증 필요", content = @Content),
+            @ApiResponse(responseCode = "403", description = "본인 경험만 요약 가능", content = @Content),
             @ApiResponse(responseCode = "404", description = "활동 기록 없음", content = @Content),
             @ApiResponse(responseCode = "409", description = "이미 요약 진행 중", content = @Content)
     })
@@ -92,6 +93,7 @@ public interface ExperienceApi {
             @ApiResponse(responseCode = "200", description = "조회 성공",
                     content = @Content(schema = @Schema(implementation = AiSummaryStatusResponse.class))),
             @ApiResponse(responseCode = "401", description = "인증 필요", content = @Content),
+            @ApiResponse(responseCode = "403", description = "본인 경험만 조회 가능", content = @Content),
             @ApiResponse(responseCode = "404", description = "활동 기록 없음", content = @Content)
     })
     @GetMapping("/{id}/summarize")

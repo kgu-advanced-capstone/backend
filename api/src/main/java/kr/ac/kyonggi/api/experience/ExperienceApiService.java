@@ -15,6 +15,8 @@ import kr.ac.kyonggi.domain.user.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.List;
 
@@ -56,7 +58,7 @@ public class ExperienceApiService {
     @Transactional
     public AiSummaryStatusResponse startSummarize(Long id, String email) {
         User user = userService.getByEmail(email);
-        Experience experience = experienceService.getById(id);
+        Experience experience = experienceService.getByIdWithLock(id);
 
         if (!experience.getUserId().equals(user.getId())) {
             throw new ForbiddenException("본인의 경험 기록만 요약할 수 있습니다.");
@@ -68,7 +70,14 @@ public class ExperienceApiService {
         experience.startSummarizing();
         experienceService.save(experience);
 
-        experienceSummarizeTask.run(experience.getId(), experience.getProjectId());
+        Long experienceId = experience.getId();
+        Long projectId = experience.getProjectId();
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                experienceSummarizeTask.run(experienceId, projectId);
+            }
+        });
 
         return AiSummaryStatusResponse.from(experience);
     }

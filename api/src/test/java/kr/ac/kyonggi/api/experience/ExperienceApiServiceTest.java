@@ -31,6 +31,9 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
@@ -146,23 +149,32 @@ class ExperienceApiServiceTest {
         experience.startSummarizing();
 
         given(userService.getByEmail(EMAIL)).willReturn(user);
-        given(experienceService.getById(100L)).willReturn(experience);
+        given(experienceService.getByIdWithLock(100L)).willReturn(experience);
 
         assertThatThrownBy(() -> experienceApiService.startSummarize(100L, EMAIL))
                 .isInstanceOf(SummarizeAlreadyInProgressException.class);
     }
 
     @Test
-    @DisplayName("startSummarize()는 상태를 IN_PROGRESS로 변경하고 비동기 작업을 시작한다")
+    @DisplayName("startSummarize()는 상태를 IN_PROGRESS로 변경하고 트랜잭션 커밋 후 비동기 작업을 시작한다")
     void startSummarize_success_setsInProgressAndStartsAsync() {
-        given(userService.getByEmail(EMAIL)).willReturn(user);
-        given(experienceService.getById(100L)).willReturn(experience);
-        given(experienceService.save(any(Experience.class))).willAnswer(inv -> inv.getArgument(0));
+        TransactionSynchronizationManager.initSynchronization();
+        try {
+            given(userService.getByEmail(EMAIL)).willReturn(user);
+            given(experienceService.getByIdWithLock(100L)).willReturn(experience);
+            given(experienceService.save(any(Experience.class))).willAnswer(inv -> inv.getArgument(0));
 
-        AiSummaryStatusResponse result = experienceApiService.startSummarize(100L, EMAIL);
+            AiSummaryStatusResponse result = experienceApiService.startSummarize(100L, EMAIL);
 
-        assertThat(result.status()).isEqualTo(AiSummaryStatus.IN_PROGRESS);
-        verify(experienceSummarizeTask).run(100L, PROJECT_ID);
+            assertThat(result.status()).isEqualTo(AiSummaryStatus.IN_PROGRESS);
+
+            TransactionSynchronizationManager.getSynchronizations()
+                    .forEach(TransactionSynchronization::afterCommit);
+
+            verify(experienceSummarizeTask).run(100L, PROJECT_ID);
+        } finally {
+            TransactionSynchronizationManager.clearSynchronization();
+        }
     }
 
     @Test
@@ -172,7 +184,7 @@ class ExperienceApiServiceTest {
         ReflectionTestUtils.setField(other, "id", 99L);
 
         given(userService.getByEmail("other@test.com")).willReturn(other);
-        given(experienceService.getById(100L)).willReturn(experience);
+        given(experienceService.getByIdWithLock(100L)).willReturn(experience);
 
         assertThatThrownBy(() -> experienceApiService.startSummarize(100L, "other@test.com"))
                 .isInstanceOf(ForbiddenException.class);

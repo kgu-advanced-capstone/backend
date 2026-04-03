@@ -25,7 +25,13 @@ public class ExperienceSummarizeTask {
     @Async("asyncExecutor")
     @Transactional
     public void run(Long experienceId, Long projectId) {
-        Experience experience = experienceService.getById(experienceId);
+        Experience experience;
+        try {
+            experience = experienceService.getById(experienceId);
+        } catch (Exception e) {
+            log.error("Experience 조회 실패 experienceId={}", experienceId, e);
+            return;
+        }
         try {
             Project project = projectService.getById(projectId);
             List<String> keyPoints = experienceSummarizer.generateKeyPoints(
