@@ -13,6 +13,7 @@ import kr.ac.kyonggi.domain.project.ProjectService;
 import kr.ac.kyonggi.domain.user.User;
 import kr.ac.kyonggi.domain.user.UserService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -20,6 +21,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -75,7 +77,12 @@ public class ExperienceApiService {
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCommit() {
-                experienceSummarizeTask.run(experienceId, projectId);
+                try {
+                    experienceSummarizeTask.run(experienceId, projectId);
+                } catch (Exception e) {
+                    log.error("비동기 요약 작업 제출 실패 experienceId={}", experienceId, e);
+                    experienceSummarizeTask.markFailed(experienceId);
+                }
             }
         });
 

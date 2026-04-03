@@ -22,6 +22,17 @@ public class ExperienceSummarizeTask {
     private final ProjectService projectService;
     private final ExperienceSummarizer experienceSummarizer;
 
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
+    public void markFailed(Long experienceId) {
+        try {
+            Experience experience = experienceService.getById(experienceId);
+            experience.failSummarizing();
+            experienceService.save(experience);
+        } catch (Exception e) {
+            log.error("AI 요약 실패 상태 처리 중 오류 experienceId={}", experienceId, e);
+        }
+    }
+
     @Async("asyncExecutor")
     @Transactional
     public void run(Long experienceId, Long projectId) {
