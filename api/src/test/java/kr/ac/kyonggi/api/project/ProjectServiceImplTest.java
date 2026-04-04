@@ -86,6 +86,22 @@ class ProjectServiceImplTest {
         assertThat(projectMemberRepository.existsByProjectIdAndUserId(saved.getId(), 1L)).isTrue();
     }
 
+    @Test
+    @DisplayName("create()는 작성자를 멤버로 등록하고 currentMemberCount를 1로 설정한다")
+    void create_setsCurrentMemberCountToOne() {
+        Project newProject = Project.create(new ProjectCreateCommand(
+                "새 프로젝트", "설명", "프론트엔드", List.of("React"), 3,
+                LocalDate.of(2026, 12, 31), 1L
+        ));
+
+        Project saved = projectService.create(newProject);
+        em.flush();
+        em.clear();
+
+        Project found = projectRepository.findById(saved.getId()).orElseThrow();
+        assertThat(found.getCurrentMemberCount()).isEqualTo(1);
+    }
+
     // ── getById() ─────────────────────────────────────────────────────
 
     @Test
