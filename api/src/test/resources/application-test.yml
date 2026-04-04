@@ -23,6 +23,7 @@ spring:
 
   autoconfigure:
     exclude:
+      - io.awspring.cloud.autoconfigure.s3.S3AutoConfiguration
       - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
       - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
 
@@ -31,7 +32,17 @@ spring:
       repositories:
         enabled: false
 
+cloud:
+  aws:
+    credentials:
+      access-key: ${S3_ACCESS_KEY:test-access-key}
+      secret-key: ${S3_SECRET_KEY:test-secret-key}
+    region:
+      static: ${S3_REGION:ap-southeast-1}
+    s3:
+      endpoint: ${S3_ENDPOINT:https://test-endpoint.supabase.co}
+
 storage:
-  local:
-    root-dir: ./uploads-test
-    base-url: http://localhost:8080/files
+  s3:
+    bucket: ${S3_BUCKET:test-bucket}
+

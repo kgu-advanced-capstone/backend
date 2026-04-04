@@ -6,11 +6,11 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
 /**
  * 파일 저장 설정 프로퍼티.
  *
- * @param rootDir 로컬 저장소의 루트 디렉토리
- * @param baseUrl 파일 접근을 위한 베이스 URL
  */
-@ConfigurationProperties(prefix = "storage.local")
+@ConfigurationProperties(prefix = "storage.s3")
 public record StorageProperties(
+        String bucket,
+        String endpoint,
         @DefaultValue("./uploads") String rootDir,
         @DefaultValue("http://pcserver.cloud/files") String baseUrl
 ) {

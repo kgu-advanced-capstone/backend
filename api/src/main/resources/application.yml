@@ -16,7 +16,28 @@ spring:
         generate_statistics: true
         format_sql: true
 
+  autoconfigure:
+    exclude:
+      - io.awspring.cloud.autoconfigure.s3.S3AutoConfiguration
+
+cloud:
+  aws:
+    s3:
+      endpoint: ${SUPABASE_S3_ENDPOINT}
+      path-style-access-enabled: true
+    region:
+      static: ${SUPABASE_S3_REGION:ap-southeast-1}
+      auto: false
+    credentials:
+      access-key: ${SUPABASE_S3_ACCESS_KEY}
+      secret-key: ${SUPABASE_S3_SECRET_KEY}
+    stack:
+      auto: false
+
 storage:
+  s3:
+    bucket: ${SUPABASE_S3_BUCKET}
+    endpoint: ${SUPABASE_S3_ENDPOINT}
   local:
     root-dir: ./uploads
     base-url: http://pcserver.cloud/files
@@ -45,3 +66,10 @@ management:
       hibernate: true
     tags:
       application: ${spring.application.name}
+
+sentry:
+  dsn: https://c7eb336316fb5567c78bd64a4f9044b2@o4511143666515968.ingest.us.sentry.io/4511143667564544
+  # 주소 노출 보안위협 X
+  send-default-pii: true
+  logs:
+    enabled: true

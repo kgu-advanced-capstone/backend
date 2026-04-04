@@ -37,6 +37,13 @@ public class ExperienceServiceImpl implements ExperienceService {
 
     @Override
     @Transactional
+    public Experience getByIdWithLock(Long id) {
+        return experienceRepository.findByIdWithLock(id)
+                .orElseThrow(() -> new ExperienceNotFoundException("경험 기록을 찾을 수 없습니다: " + id));
+    }
+
+    @Override
+    @Transactional
     public Experience save(Experience experience) {
         return experienceRepository.save(experience);
     }

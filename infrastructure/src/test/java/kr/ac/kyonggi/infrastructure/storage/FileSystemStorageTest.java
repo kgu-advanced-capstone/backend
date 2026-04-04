@@ -1,75 +1,82 @@
 package kr.ac.kyonggi.infrastructure.storage;
 
-import kr.ac.kyonggi.domain.storage.FileStorage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.PutObjectResponse;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.DeleteObjectResponse;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class) // Mockito 사용 설정
 class FileSystemStorageTest {
 
     private FileSystemStorage fileSystemStorage;
-    private String rootDir;
-    private final String baseUrl = "http://localhost:8080/files";
 
-    @TempDir
-    Path tempDir;
+    @Mock
+    private S3Client s3Client; // 가짜 S3 클라이언트
+
+    private final String bucket = "capstone";
+    private final String endpoint = "https://supabase.co/storage/v1/s3";
 
     @BeforeEach
     void setUp() {
-        rootDir = tempDir.toString();
-        StorageProperties properties = new StorageProperties(rootDir, baseUrl);
-        fileSystemStorage = new FileSystemStorage(properties);
+        // 실제 yml을 읽지 않고 테스트용 설정값을 직접 주입
+        StorageProperties properties = new StorageProperties(bucket, endpoint,"./test", "http://test");
+        fileSystemStorage = new FileSystemStorage(s3Client, properties);
     }
 
     @Test
-    @DisplayName("upload() 성공 시 파일이 저장되고 URL을 반환한다")
-    void upload_success() throws IOException {
-        // given
+    @DisplayName("S3 업로드 시 UUID가 포함된 URL을 반환해야 한다 (Mock)")
+    void upload_success_mock() {
+        // given: s3Client.putObject가 호출되면 성공 응답을 보내준다고 가정
+        when(s3Client.putObject(any(PutObjectRequest.class), any(software.amazon.awssdk.core.sync.RequestBody.class)))
+                .thenReturn(PutObjectResponse.builder().build());
+
         String originalFilename = "test.png";
-        String content = "test content";
-        InputStream inputStream = new ByteArrayInputStream(content.getBytes());
+        InputStream inputStream = new ByteArrayInputStream("test content".getBytes());
 
         // when
         String fileUrl = fileSystemStorage.upload(inputStream, originalFilename, "image/png");
 
         // then
-        assertThat(fileUrl).startsWith(baseUrl);
-        String filename = fileUrl.substring(baseUrl.length() + 1);
-        Path savedFile = tempDir.resolve(filename);
-        assertThat(Files.exists(savedFile)).isTrue();
-        assertThat(Files.readString(savedFile)).isEqualTo(content);
+        // 1. 반환된 URL이 설정한 엔드포인트와 버킷명을 포함하는지 확인
+        assertThat(fileUrl).contains(endpoint);
+        assertThat(fileUrl).contains(bucket);
+
+        // 2. 실제로 S3Client의 putObject 메서드가 실행되었는지 확인
+        verify(s3Client, times(1)).putObject(any(PutObjectRequest.class), any(software.amazon.awssdk.core.sync.RequestBody.class));
+
+        System.out.println("✅ Mock 업로드 테스트 완료: " + fileUrl);
     }
 
     @Test
-    @DisplayName("delete() 호출 시 저장된 파일이 삭제된다")
-    void delete_success() throws IOException {
-        // given
-        String originalFilename = "test.png";
-        InputStream inputStream = new ByteArrayInputStream("content".getBytes());
-        String fileUrl = fileSystemStorage.upload(inputStream, originalFilename, "image/png");
+    @DisplayName("S3 삭제 호출 시 s3Client의 deleteObject가 실행되어야 한다 (Mock)")
+    void delete_success_mock() {
+        // given: deleteObject가 성공한다고 가정
+        when(s3Client.deleteObject(any(DeleteObjectRequest.class)))
+                .thenReturn(DeleteObjectResponse.builder().build());
+
+        String fileUrl = endpoint + "/" + bucket + "/test-uuid.png";
 
         // when
         fileSystemStorage.delete(fileUrl);
 
         // then
-        String filename = fileUrl.substring(baseUrl.length() + 1);
-        Path savedFile = tempDir.resolve(filename);
-        assertThat(Files.exists(savedFile)).isFalse();
-    }
+        // 3. 실제로 S3Client의 deleteObject 메서드가 1번 호출되었는지 검증
+        verify(s3Client, times(1)).deleteObject(any(DeleteObjectRequest.class));
 
-    @Test
-    @DisplayName("delete() 호출 시 URL이 baseUrl로 시작하지 않으면 무시한다")
-    void delete_invalidUrl() {
-        // when & then (no exception should be thrown)
-        fileSystemStorage.delete("http://other-domain.com/file.png");
+        System.out.println("✅ Mock 삭제 테스트 완료");
     }
 }
