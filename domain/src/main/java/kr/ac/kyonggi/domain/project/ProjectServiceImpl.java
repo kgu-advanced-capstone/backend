@@ -24,9 +24,9 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     @Transactional
     public Project create(Project project) {
+        project.addMember();
         Project saved = projectRepository.save(project);
-        projectMemberRepository.save
-                (ProjectMember.of(new ProjectMemberCreateCommand(saved.getId(), saved.getAuthorId())));
+        projectMemberRepository.save(ProjectMember.of(new ProjectMemberCreateCommand(saved.getId(), saved.getAuthorId())));
         return saved;
     }
 

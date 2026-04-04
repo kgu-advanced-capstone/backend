@@ -63,7 +63,6 @@ public class ProjectApiService {
                 author.getId()));
 
         Project saved = projectService.create(project);
-        projectService.apply(saved.getId(), author.getId());
         eventPublisher.publishEvent(new NotificationCreatedEvent(
                 author.getId(), "\"" + saved.getTitle() + "\" 프로젝트에 참가했습니다."));
 
