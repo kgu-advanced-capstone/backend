@@ -8,7 +8,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import kr.ac.kyonggi.api.auth.dto.LoginRequest;
 import kr.ac.kyonggi.api.auth.dto.RegisterRequest;
@@ -42,7 +41,7 @@ public interface AuthApi {
 
     @Operation(
             summary = "로그인",
-            description = "이메일/비밀번호로 로그인합니다. 성공 시 JSESSIONID 쿠키가 설정됩니다. " +
+            description = "이메일/비밀번호로 로그인합니다. 성공 시 accessToken을 반환합니다. " +
                     "이 엔드포인트는 Spring Security 필터가 처리합니다.",
             security = {}
     )
@@ -73,10 +72,10 @@ public interface AuthApi {
 
     @Operation(
             summary = "로그아웃",
-            description = "현재 세션을 무효화합니다.",
+            description = "클라이언트가 토큰을 폐기합니다. 서버는 204를 반환합니다.",
             security = {}
     )
     @ApiResponse(responseCode = "204", description = "로그아웃 성공", content = @Content)
     @PostMapping("/logout")
-    ResponseEntity<Void> logout(HttpServletRequest request);
+    ResponseEntity<Void> logout();
 }

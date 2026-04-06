@@ -18,5 +18,25 @@ spring:
       host: localhost
       port: 6379
 
+# 추가: 로컬 전용 JWT 시크릿
+# 운영 환경에서는 반드시 환경 변수로 주입
+jwt:
+  secret: local-dev-secret-key-32-characters-long
+  expiration-ms: 3600000
+
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID:local-client-id}
+            client-secret: ${GOOGLE_CLIENT_SECRET:local-client-secret}
+            scope:
+              - email
+              - profile
+
+oauth2:
+  redirect-uri: http://localhost:3000/oauth2/callback
 
 

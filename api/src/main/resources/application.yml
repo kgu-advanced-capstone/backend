@@ -9,15 +9,23 @@ spring:
       hibernate:
         generate_statistics: true
         format_sql: true
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            scope:
+              - email
+              - profile
 
-server:
-  servlet:
-    session:
-      cookie:
-        http-only: true
-        same-site: lax
-        name: JSESSIONID
-      timeout: 30m
+jwt:
+  secret: ${JWT_SECRET}
+  expiration-ms: 3600000
+
+oauth2:
+  redirect-uri: ${OAUTH2_REDIRECT_URI:https://capstone-frontend.jinhy.uk/oauth2/callback}
 
 management:
   endpoints:
