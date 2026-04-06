@@ -23,3 +23,20 @@ spring:
     redis:
       repositories:
         enabled: false
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: test-client-id
+            client-secret: test-client-secret
+            scope:
+              - email
+              - profile
+
+jwt:
+  secret: test-secret-key-for-jwt-testing-32-characters-long
+  expiration-ms: 3600000
+
+oauth2:
+  redirect-uri: http://localhost:3000/oauth2/callback
