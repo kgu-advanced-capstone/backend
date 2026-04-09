@@ -4,6 +4,7 @@ import kr.ac.kyonggi.common.exception.AlreadyAppliedException;
 import kr.ac.kyonggi.common.exception.ForbiddenException;
 import kr.ac.kyonggi.common.exception.ProjectNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -99,5 +100,16 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     public List<ProjectMember> getParticipantsByProjectIds(List<Long> projectIds) {
         return projectMemberRepository.findByProjectIdIn(projectIds);
+    }
+
+    @Override
+    @Cacheable(value = "project-count", key = "(#category ?: '__all__') + ':' + (#keyword ?: '')", condition = "#keyword == null || #keyword.isBlank()")
+    public long countProjects(String category, String keyword) {
+        return projectRepository.countWithFilters(category, keyword);
+    }
+
+    @Override
+    public List<Project> searchContent(String category, String keyword, Pageable pageable) {
+        return projectRepository.findContentWithFilters(category, keyword, pageable);
     }
 }

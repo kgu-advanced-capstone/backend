@@ -12,6 +12,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Objects;
 
 @Repository
 @RequiredArgsConstructor
@@ -22,27 +23,30 @@ public class ProjectRepositoryImpl implements ProjectRepositoryCustom {
 
     @Override
     public Page<Project> findWithFilters(String category, String keyword, Pageable pageable) {
-        List<Project> content = queryFactory
+        List<Project> content = findContentWithFilters(category, keyword, pageable);
+        long total = countWithFilters(category, keyword);
+        return new PageImpl<>(content, pageable, total);
+    }
+
+    @Override
+    public List<Project> findContentWithFilters(String category, String keyword, Pageable pageable) {
+        return queryFactory
                 .selectFrom(project)
-                .where(
-                        categoryEq(category),
-                        searchKeyword(keyword)
-                )
+                .where(categoryEq(category), searchKeyword(keyword))
                 .orderBy(project.createdAt.desc())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
+    }
 
+    @Override
+    public long countWithFilters(String category, String keyword) {
         Long total = queryFactory
                 .select(project.count())
                 .from(project)
-                .where(
-                        categoryEq(category),
-                        searchKeyword(keyword)
-                )
+                .where(categoryEq(category), searchKeyword(keyword))
                 .fetchOne();
-
-        return new PageImpl<>(content, pageable, total != null ? total : 0L);
+        return Objects.requireNonNullElse(total, 0L);
     }
 
     private BooleanExpression categoryEq(String category) {

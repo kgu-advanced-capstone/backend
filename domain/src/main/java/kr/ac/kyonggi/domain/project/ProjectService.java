@@ -29,4 +29,8 @@ public interface ProjectService {
     List<ProjectMember> getParticipants(Long projectId);
 
     List<ProjectMember> getParticipantsByProjectIds(List<Long> projectIds);
+
+    long countProjects(String category, String keyword);
+
+    List<Project> searchContent(String category, String keyword, Pageable pageable);
 }

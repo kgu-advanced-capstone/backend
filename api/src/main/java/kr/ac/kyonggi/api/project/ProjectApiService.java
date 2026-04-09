@@ -10,7 +10,6 @@ import kr.ac.kyonggi.domain.user.User;
 import kr.ac.kyonggi.domain.user.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -31,19 +30,20 @@ public class ProjectApiService {
 
     public ProjectListResponse getProjects(String category, int page, int limit, String search) {
         PageRequest pageable = PageRequest.of(page - 1, limit, Sort.by("createdAt").descending());
-        Page<Project> projectPage = projectService.search(category, search, pageable);
+        long totalCount = projectService.countProjects(category, search);
+        List<Project> content = projectService.searchContent(category, search, pageable);
 
-        List<Long> projectIds = projectPage.getContent().stream().map(Project::getId).toList();
+        List<Long> projectIds = content.stream().map(Project::getId).toList();
         Map<Long, Long> memberCounts = projectService.getMemberCounts(projectIds);
-        List<Long> authorIds = projectPage.getContent().stream().map(Project::getAuthorId).toList();
+        List<Long> authorIds = content.stream().map(Project::getAuthorId).toList();
         Map<Long, String> authorNames = userService.getNamesByIds(authorIds);
 
-        List<ProjectSummaryResponse> projects = projectPage.getContent().stream()
+        List<ProjectSummaryResponse> projects = content.stream()
                 .map(p -> ProjectSummaryResponse.from(p, memberCounts.getOrDefault(p.getId(), 0L),
                         authorNames.getOrDefault(p.getAuthorId(), "")))
                 .toList();
 
-        return new ProjectListResponse(projects, projectPage.getTotalElements());
+        return new ProjectListResponse(projects, totalCount);
     }
 
     public ProjectDetailResponse getProject(Long id) {
