@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import kr.ac.kyonggi.domain.project.Project;
+import kr.ac.kyonggi.domain.project.ProjectData;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -47,6 +48,19 @@ public record ProjectSummaryResponse(
                 project.getMaxMembers(),
                 authorName,
                 project.getCreatedAt() != null ? project.getCreatedAt().toLocalDate() : null
+        );
+    }
+
+    public static ProjectSummaryResponse fromData(ProjectData data, long memberCount, String authorName) {
+        return new ProjectSummaryResponse(
+                data.id(),
+                data.title(),
+                data.category(),
+                data.skills(),
+                (int) memberCount,
+                data.maxMembers(),
+                authorName,
+                data.createdAt() != null ? data.createdAt().toLocalDate() : null
         );
     }
 }

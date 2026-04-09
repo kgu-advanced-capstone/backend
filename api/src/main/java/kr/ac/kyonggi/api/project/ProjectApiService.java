@@ -4,6 +4,7 @@ import kr.ac.kyonggi.api.project.dto.*;
 import kr.ac.kyonggi.domain.notification.NotificationCreatedEvent;
 import kr.ac.kyonggi.domain.project.Project;
 import kr.ac.kyonggi.domain.project.ProjectCreateCommand;
+import kr.ac.kyonggi.domain.project.ProjectData;
 import kr.ac.kyonggi.domain.project.ProjectMember;
 import kr.ac.kyonggi.domain.project.ProjectService;
 import kr.ac.kyonggi.domain.user.User;
@@ -31,19 +32,25 @@ public class ProjectApiService {
 
     public ProjectListResponse getProjects(String category, int page, int limit, String search) {
         PageRequest pageable = PageRequest.of(page - 1, limit, Sort.by("createdAt").descending());
-        Page<Project> projectPage = projectService.search(category, search, pageable);
 
-        List<Long> projectIds = projectPage.getContent().stream().map(Project::getId).toList();
-        Map<Long, Long> memberCounts = projectService.getMemberCounts(projectIds);
-        List<Long> authorIds = projectPage.getContent().stream().map(Project::getAuthorId).toList();
-        Map<Long, String> authorNames = userService.getNamesByIds(authorIds);
+        Page<Long> idPage = projectService.searchIds(category, search, pageable);
+        List<Long> projectIds = idPage.getContent();
 
-        List<ProjectSummaryResponse> projects = projectPage.getContent().stream()
-                .map(p -> ProjectSummaryResponse.from(p, memberCounts.getOrDefault(p.getId(), 0L),
-                        authorNames.getOrDefault(p.getAuthorId(), "")))
+        List<ProjectData> projectDataList = projectIds.stream()
+                .map(projectService::getProjectData)
                 .toList();
 
-        return new ProjectListResponse(projects, projectPage.getTotalElements());
+        Map<Long, Long> memberCounts = projectService.getMemberCounts(projectIds);
+        List<Long> authorIds = projectDataList.stream().map(ProjectData::authorId).toList();
+        Map<Long, String> authorNames = userService.getNamesByIds(authorIds);
+
+        List<ProjectSummaryResponse> projects = projectDataList.stream()
+                .map(d -> ProjectSummaryResponse.fromData(d,
+                        memberCounts.getOrDefault(d.id(), 0L),
+                        authorNames.getOrDefault(d.authorId(), "")))
+                .toList();
+
+        return new ProjectListResponse(projects, idPage.getTotalElements());
     }
 
     public ProjectDetailResponse getProject(Long id) {

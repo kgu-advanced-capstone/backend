@@ -14,6 +14,10 @@ public interface ProjectService {
 
     Page<Project> search(String category, String keyword, Pageable pageable);
 
+    Page<Long> searchIds(String category, String keyword, Pageable pageable);
+
+    ProjectData getProjectData(Long id);
+
     Project apply(Long projectId, Long userId);
 
     void updateStatus(Long projectId, Long requesterId, ProjectStatus status);

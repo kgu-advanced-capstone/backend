@@ -6,4 +6,6 @@ import org.springframework.data.domain.Pageable;
 public interface ProjectRepositoryCustom {
 
     Page<Project> findWithFilters(String category, String keyword, Pageable pageable);
+
+    Page<Long> findIdsByFilters(String category, String keyword, Pageable pageable);
 }

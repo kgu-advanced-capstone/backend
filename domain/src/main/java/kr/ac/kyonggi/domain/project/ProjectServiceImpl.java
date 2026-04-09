@@ -4,6 +4,8 @@ import kr.ac.kyonggi.common.exception.AlreadyAppliedException;
 import kr.ac.kyonggi.common.exception.ForbiddenException;
 import kr.ac.kyonggi.common.exception.ProjectNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -37,12 +39,24 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
+    @Cacheable(value = "project", key = "#id")
+    public ProjectData getProjectData(Long id) {
+        return ProjectData.from(getById(id));
+    }
+
+    @Override
     public Page<Project> search(String category, String keyword, Pageable pageable) {
         return projectRepository.findWithFilters(category, keyword, pageable);
     }
 
     @Override
+    public Page<Long> searchIds(String category, String keyword, Pageable pageable) {
+        return projectRepository.findIdsByFilters(category, keyword, pageable);
+    }
+
+    @Override
     @Transactional
+    @CacheEvict(value = "project", key = "#projectId")
     public Project apply(Long projectId, Long userId) {
         Project project = projectRepository.findByIdWithLock(projectId)
                 .orElseThrow(() -> new ProjectNotFoundException("프로젝트를 찾을 수 없습니다: " + projectId));
@@ -60,6 +74,7 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "project", key = "#projectId")
     public void updateStatus(Long projectId, Long requesterId, ProjectStatus status) {
         Project project = getById(projectId);
 
