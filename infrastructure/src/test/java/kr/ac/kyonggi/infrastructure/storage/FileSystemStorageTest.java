@@ -22,19 +22,20 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class) // Mockito 사용 설정
 class FileSystemStorageTest {
 
-    private FileSystemStorage fileSystemStorage;
+    private SupabaseS3Storage fileSystemStorage;
 
     @Mock
     private S3Client s3Client; // 가짜 S3 클라이언트
 
     private final String bucket = "capstone";
     private final String endpoint = "https://supabase.co/storage/v1/s3";
+    private final String publicFileUrl = "https://test.com";
 
     @BeforeEach
     void setUp() {
         // 실제 yml을 읽지 않고 테스트용 설정값을 직접 주입
-        StorageProperties properties = new StorageProperties(bucket, endpoint,"./test", "http://test");
-        fileSystemStorage = new FileSystemStorage(s3Client, properties);
+        StorageProperties properties = new StorageProperties(bucket, endpoint, publicFileUrl);
+        fileSystemStorage = new SupabaseS3Storage(s3Client, properties);
     }
 
     @Test
@@ -51,9 +52,9 @@ class FileSystemStorageTest {
         String fileUrl = fileSystemStorage.upload(inputStream, originalFilename, "image/png");
 
         // then
-        // 1. 반환된 URL이 설정한 엔드포인트와 버킷명을 포함하는지 확인
-        assertThat(fileUrl).contains(endpoint);
+        // 1. 반환된 URL이 설정한 버킷과 주소를 포함하는지 확인
         assertThat(fileUrl).contains(bucket);
+        assertThat(fileUrl).contains(publicFileUrl);
 
         // 2. 실제로 S3Client의 putObject 메서드가 실행되었는지 확인
         verify(s3Client, times(1)).putObject(any(PutObjectRequest.class), any(software.amazon.awssdk.core.sync.RequestBody.class));
@@ -68,7 +69,7 @@ class FileSystemStorageTest {
         when(s3Client.deleteObject(any(DeleteObjectRequest.class)))
                 .thenReturn(DeleteObjectResponse.builder().build());
 
-        String fileUrl = endpoint + "/" + bucket + "/test-uuid.png";
+        String fileUrl = endpoint + "/" + publicFileUrl + "/test-uuid.png";
 
         // when
         fileSystemStorage.delete(fileUrl);

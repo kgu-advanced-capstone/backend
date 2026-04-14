@@ -11,7 +11,6 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
 public record StorageProperties(
         String bucket,
         String endpoint,
-        @DefaultValue("./uploads") String rootDir,
-        @DefaultValue("http://pcserver.cloud/files") String baseUrl
+        @DefaultValue("https://biyegfsvukhzhkrlityk.supabase.co/storage/v1/object/public") String publicFileUrl
 ) {
 }
