@@ -28,7 +28,7 @@ class UserServiceImplTest {
     private UserService userService;
 
     private User buildUser(String email) {
-        return User.create(new UserCreateCommand(email, "encoded", "테스트", null));
+        return User.create(new UserCreateCommand(email, "encoded", "테스트", null, null));
     }
 
     @Test

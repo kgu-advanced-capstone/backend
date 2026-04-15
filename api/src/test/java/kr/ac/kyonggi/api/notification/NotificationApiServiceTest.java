@@ -40,7 +40,7 @@ class NotificationApiServiceTest {
 
     @BeforeEach
     void setUp() {
-        user = User.create(new UserCreateCommand("test@test.com", "pw", "홍길동", null));
+        user = User.create(new UserCreateCommand("test@test.com", "pw", "홍길동", null, null));
         ReflectionTestUtils.setField(user, "id", 1L);
 
         notification = Notification.create(new NotificationCreateCommand(1L, "\"테스트\" 프로젝트에 참가했습니다."));
