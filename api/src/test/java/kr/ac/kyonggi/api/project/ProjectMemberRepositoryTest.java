@@ -39,8 +39,8 @@ class ProjectMemberRepositoryTest {
 
     @BeforeEach
     void setUp() {
-        user1 = em.persist(User.create(new UserCreateCommand("user1@test.com", "pw", "유저1", null)));
-        user2 = em.persist(User.create(new UserCreateCommand("user2@test.com", "pw", "유저2", null)));
+        user1 = em.persist(User.create(new UserCreateCommand("user1@test.com", "pw", "유저1", null, null)));
+        user2 = em.persist(User.create(new UserCreateCommand("user2@test.com", "pw", "유저2", null, null)));
         project = em.persist(Project.create(new ProjectCreateCommand(
                 "테스트 프로젝트", "설명", "백엔드",
                 List.of("Java"), 4, LocalDate.of(2026, 12, 31), user1.getId()

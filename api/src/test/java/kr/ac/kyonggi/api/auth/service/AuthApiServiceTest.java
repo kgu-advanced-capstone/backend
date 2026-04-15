@@ -33,7 +33,7 @@ class AuthApiServiceTest {
     @Test
     @DisplayName("신규 이메일로 회원가입 성공")
     void register_newEmail_success() {
-        RegisterRequest request = new RegisterRequest("test@test.com", "password123", "홍길동");
+        RegisterRequest request = new RegisterRequest("test@test.com", "password123", "홍길동", null);
 
         UserResponse response = authApiService.register(request);
 
@@ -44,7 +44,7 @@ class AuthApiServiceTest {
     @Test
     @DisplayName("중복 이메일로 회원가입 시 UserAlreadyExistsException 발생")
     void register_duplicateEmail_throwsException() {
-        RegisterRequest request = new RegisterRequest("test@test.com", "password123", "홍길동");
+        RegisterRequest request = new RegisterRequest("test@test.com", "password123", "홍길동", null);
         authApiService.register(request);
 
         assertThatThrownBy(() -> authApiService.register(request))
@@ -54,7 +54,7 @@ class AuthApiServiceTest {
     @Test
     @DisplayName("회원가입 시 비밀번호는 단방향 암호화되어 저장됨")
     void register_passwordIsEncoded() {
-        authApiService.register(new RegisterRequest("test@test.com", "password123", "홍길동"));
+        authApiService.register(new RegisterRequest("test@test.com", "password123", "홍길동", null));
 
         String storedPassword = userRepository.findByEmail("test@test.com").orElseThrow().getPassword();
 
@@ -65,7 +65,7 @@ class AuthApiServiceTest {
     @Test
     @DisplayName("이메일로 UserResponse 조회")
     void findByEmail_returnsUserResponse() {
-        authApiService.register(new RegisterRequest("test@test.com", "password123", "홍길동"));
+        authApiService.register(new RegisterRequest("test@test.com", "password123", "홍길동", null));
 
         UserResponse response = authApiService.findByEmail("test@test.com");
 

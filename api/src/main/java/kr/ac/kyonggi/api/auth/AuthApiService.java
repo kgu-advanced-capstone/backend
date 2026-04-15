@@ -23,7 +23,7 @@ public class AuthApiService {
         }
 
         User user = User.create(new UserCreateCommand(
-                request.email(), passwordEncoder.encode(request.password()), request.name(), null));
+                request.email(), passwordEncoder.encode(request.password()), request.name(), null, request.phone()));
 
         User saved = userService.register(user);
         return UserResponse.from(saved);

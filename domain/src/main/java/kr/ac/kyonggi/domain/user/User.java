@@ -56,6 +56,7 @@ public class User {
         this.password = command.password();
         this.name = command.name();
         this.profileImage = command.profileImage();
+        this.phone = command.phone();
     }
 
     public void updateProfile(UpdateProfileCommand command) {

@@ -60,7 +60,7 @@ class ExperienceApiServiceTest {
 
     @BeforeEach
     void setUp() {
-        user = User.create(new UserCreateCommand(EMAIL, "pw", "홍길동", null));
+        user = User.create(new UserCreateCommand(EMAIL, "pw", "홍길동", null, null));
         ReflectionTestUtils.setField(user, "id", USER_ID);
 
         project = Project.create(new ProjectCreateCommand("프로젝트 제목", "설명", "카테고리", List.of("Java"), 5, null, USER_ID));
@@ -180,7 +180,7 @@ class ExperienceApiServiceTest {
     @Test
     @DisplayName("startSummarize()는 본인 경험이 아니면 ForbiddenException을 던진다")
     void startSummarize_throwsForbiddenException_forNonOwner() {
-        User other = User.create(new UserCreateCommand("other@test.com", "pw", "타인", null));
+        User other = User.create(new UserCreateCommand("other@test.com", "pw", "타인", null, null));
         ReflectionTestUtils.setField(other, "id", 99L);
 
         given(userService.getByEmail("other@test.com")).willReturn(other);
