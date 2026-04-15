@@ -14,6 +14,12 @@ public record ParticipantResponse(
         @Schema(description = "이름", example = "홍길동")
         String name,
 
+        @Schema(description = "이메일", example = "hong@example.com")
+        String email,
+
+        @Schema(description = "전화번호", example = "010-1234-5678")
+        String phone,
+
         @Schema(description = "프로필 이미지 URL", example = "https://example.com/image.png")
         String profileImage,
 
@@ -31,6 +37,8 @@ public record ParticipantResponse(
         return new ParticipantResponse(
                 user.getId(),
                 user.getName(),
+                user.getEmail(),
+                user.getPhone(),
                 user.getProfileImage(),
                 user.getGithub(),
                 user.getBlog(),
