@@ -16,7 +16,7 @@ class ParticipantResponseTest {
     @Test
     @DisplayName("ParticipantResponse.of()는 User의 email과 phone을 포함해야 한다")
     void of_includesEmailAndPhone() {
-        User user = User.create(new UserCreateCommand("test@example.com", "pw", "홍길동", null));
+        User user = User.create(new UserCreateCommand("test@example.com", "pw", "홍길동", null, null));
         ReflectionTestUtils.setField(user, "phone", "010-1234-5678");
 
         ProjectMember member = ProjectMember.of(new ProjectMemberCreateCommand(1L, 1L));
@@ -30,7 +30,7 @@ class ParticipantResponseTest {
     @Test
     @DisplayName("ParticipantResponse.of()는 phone이 null이어도 정상 동작한다")
     void of_phoneNullIsAllowed() {
-        User user = User.create(new UserCreateCommand("test@example.com", "pw", "홍길동", null));
+        User user = User.create(new UserCreateCommand("test@example.com", "pw", "홍길동", null, null));
 
         ProjectMember member = ProjectMember.of(new ProjectMemberCreateCommand(1L, 1L));
 

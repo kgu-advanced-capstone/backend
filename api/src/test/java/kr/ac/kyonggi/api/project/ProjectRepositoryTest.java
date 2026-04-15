@@ -37,7 +37,7 @@ class ProjectRepositoryTest {
 
     @BeforeEach
     void setUp() {
-        author = em.persist(User.create(new UserCreateCommand("author@test.com", "pw", "작성자", null)));
+        author = em.persist(User.create(new UserCreateCommand("author@test.com", "pw", "작성자", null, null)));
         em.flush();
     }
 

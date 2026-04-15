@@ -64,7 +64,7 @@ class ResumeApiServiceTest {
 
     @BeforeEach
     void setUp() {
-        user = User.create(new UserCreateCommand(EMAIL, "pw", "홍길동", null));
+        user = User.create(new UserCreateCommand(EMAIL, "pw", "홍길동", null, null));
         ReflectionTestUtils.setField(user, "id", USER_ID);
 
         project = Project.create(new ProjectCreateCommand(

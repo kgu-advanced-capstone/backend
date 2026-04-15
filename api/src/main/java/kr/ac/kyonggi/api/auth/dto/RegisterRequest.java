@@ -20,6 +20,9 @@ public record RegisterRequest(
         @NotBlank(message = "이름을 입력해주세요.")
         @Size(min = 2, max = 50, message = "이름은 2자 이상 50자 이하여야 합니다.")
         @Schema(description = "이름 (2~50자)", example = "홍길동")
-        String name
+        String name,
+
+        @Schema(description = "전화번호", example = "010-1234-5678")
+        String phone
 
 ) {}
