@@ -13,6 +13,8 @@ import kr.ac.kyonggi.domain.project.ProjectService;
 import kr.ac.kyonggi.domain.project.ProjectStatus;
 import kr.ac.kyonggi.domain.resume.Resume;
 import kr.ac.kyonggi.domain.resume.ResumedExperience;
+import kr.ac.kyonggi.domain.certification.CertificationService;
+import kr.ac.kyonggi.domain.education.EducationService;
 import kr.ac.kyonggi.domain.resume.ResumedExperienceRepository;
 import kr.ac.kyonggi.domain.experience.ExperienceSummarizer;
 import kr.ac.kyonggi.domain.resume.ResumeService;
@@ -50,6 +52,8 @@ class ResumeApiServiceTest {
     @Mock private ExperienceService experienceService;
     @Mock private ResumedExperienceRepository resumedExperienceRepository;
     @Mock private ExperienceSummarizer experienceSummarizer;
+    @Mock private EducationService educationService;
+    @Mock private CertificationService certificationService;
 
     @InjectMocks
     private ResumeApiService resumeApiService;
@@ -99,11 +103,15 @@ class ResumeApiServiceTest {
         given(userService.getByEmail(EMAIL)).willReturn(user);
         given(resumeService.findByUserId(USER_ID)).willReturn(Optional.of(mockResume));
         given(resumedExperienceRepository.findByResumeId(1L)).willReturn(List.of());
+        given(educationService.getAllByUserId(USER_ID)).willReturn(List.of());
+        given(certificationService.getAllByUserId(USER_ID)).willReturn(List.of());
 
         ResumeResponse result = resumeApiService.getResume(EMAIL);
 
         assertThat(result.basicInfo().email()).isEqualTo(EMAIL);
         assertThat(result.summarizedExperiences()).isEmpty();
+        assertThat(result.educations()).isEmpty();
+        assertThat(result.certifications()).isEmpty();
     }
 
     // ── generate() ────────────────────────────────────────────────────────────
@@ -188,6 +196,31 @@ class ResumeApiServiceTest {
         assertThat(saved).hasSize(1);
         assertThat(saved.get(0).getProjectTitle()).isEqualTo("테스트 프로젝트");
         assertThat(saved.get(0).getKeyPoints()).containsExactly("키포인트1", "키포인트2");
+        assertThat(saved.get(0).getSkills()).containsExactlyInAnyOrderElementsOf(List.of("Java", "Spring"));
+    }
+
+    @Test
+    @DisplayName("generate()는 프로젝트의 skills를 ResumedExperience에 저장한다")
+    void generate_savesProjectSkills_inResumedExperience() {
+        given(userService.getByEmail(EMAIL)).willReturn(user);
+        given(projectService.getMembershipsOf(USER_ID)).willReturn(List.of(member));
+        given(projectService.getAllByIds(List.of(PROJECT_ID))).willReturn(List.of(project));
+        given(experienceService.findByProjectIdsAndUserId(List.of(PROJECT_ID), USER_ID))
+                .willReturn(Map.of());
+        given(experienceSummarizer.generateKeyPoints(any(), any(), any(), any(), any()))
+                .willReturn(List.of("키포인트1"));
+        given(resumeService.findByUserId(USER_ID)).willReturn(Optional.empty());
+        given(resumeService.save(any(Resume.class))).willAnswer(inv -> {
+            Resume r = inv.getArgument(0);
+            ReflectionTestUtils.setField(r, "id", 1L);
+            return r;
+        });
+
+        resumeApiService.generate(EMAIL);
+
+        ArgumentCaptor<List<ResumedExperience>> captor = ArgumentCaptor.forClass(List.class);
+        verify(resumedExperienceRepository).saveAll(captor.capture());
+        assertThat(captor.getValue().get(0).getSkills()).containsExactlyInAnyOrder("Java", "Spring");
     }
 
     @Test

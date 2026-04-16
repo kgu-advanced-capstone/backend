@@ -2,6 +2,10 @@ package kr.ac.kyonggi.api.resume;
 
 import kr.ac.kyonggi.api.resume.dto.ResumeResponse;
 import kr.ac.kyonggi.common.exception.ResumeNotFoundException;
+import kr.ac.kyonggi.domain.certification.Certification;
+import kr.ac.kyonggi.domain.certification.CertificationService;
+import kr.ac.kyonggi.domain.education.Education;
+import kr.ac.kyonggi.domain.education.EducationService;
 import kr.ac.kyonggi.domain.experience.Experience;
 import kr.ac.kyonggi.domain.experience.ExperienceCreateCommand;
 import kr.ac.kyonggi.domain.experience.ExperienceService;
@@ -34,13 +38,17 @@ public class ResumeApiService {
     private final ExperienceService experienceService;
     private final ResumedExperienceRepository resumedExperienceRepository;
     private final ExperienceSummarizer experienceSummarizer;
+    private final EducationService educationService;
+    private final CertificationService certificationService;
 
     @Transactional(readOnly = true)
     public ResumeResponse getResume(String email) {
         User user = userService.getByEmail(email);
         Resume resume = resumeService.findByUserId(user.getId()).orElseThrow(() -> new ResumeNotFoundException("이력서가 없습니다. POST /api/resume/generate로 먼저 이력서를 생성해주세요."));
         List<ResumedExperience> experiences = resumedExperienceRepository.findByResumeId(resume.getId());
-        return ResumeResponse.from(user, resume, experiences);
+        List<Education> educations = educationService.getAllByUserId(user.getId());
+        List<Certification> certifications = certificationService.getAllByUserId(user.getId());
+        return ResumeResponse.from(user, resume, experiences, educations, certifications);
     }
 
     @Transactional
@@ -73,7 +81,7 @@ public class ResumeApiService {
                 expToUpdate.updateAiSummary(String.join("\n", keyPoints));
                 experienceService.save(expToUpdate);
             }
-            return ResumedExperience.of(savedResume.getId(), project.getId(), project.getTitle(), keyPoints);
+            return ResumedExperience.of(savedResume.getId(), project.getId(), project.getTitle(), keyPoints, project.getSkills());
         }).toList();
 
         resumedExperienceRepository.saveAll(experiences);
