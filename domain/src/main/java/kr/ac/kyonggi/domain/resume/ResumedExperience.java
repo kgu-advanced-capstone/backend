@@ -42,12 +42,21 @@ public class ResumedExperience {
     @Column(name = "key_point")
     private List<String> keyPoints = new ArrayList<>();
 
-    public static ResumedExperience of(Long resumeId, Long projectId, String projectTitle, List<String> keyPoints) {
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(
+            name = "resume_experience_skills",
+            joinColumns = @JoinColumn(name = "experience_id")
+    )
+    @Column(name = "skill")
+    private List<String> skills = new ArrayList<>();
+
+    public static ResumedExperience of(Long resumeId, Long projectId, String projectTitle, List<String> keyPoints, List<String> skills) {
         ResumedExperience experience = new ResumedExperience();
         experience.resumeId = resumeId;
         experience.projectId = projectId;
         experience.projectTitle = projectTitle;
         experience.keyPoints = new ArrayList<>(keyPoints);
+        experience.skills = skills != null ? new ArrayList<>(skills) : new ArrayList<>();
         return experience;
     }
 }
