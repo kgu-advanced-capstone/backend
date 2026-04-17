@@ -50,8 +50,8 @@ class ResumeControllerTest {
     private ResumeResponse sampleResumeResponse() {
         ProfileResponse profile = new ProfileResponse("홍길동", EMAIL, null, null, null, null);
         SummarizedExperienceResponse exp = new SummarizedExperienceResponse(
-                1L, "AI 기반 헬스케어", List.of("JWT 인증 구현", "배포 자동화 구성"));
-        return new ResumeResponse(profile, List.of(exp), LocalDateTime.now());
+                1L, "AI 기반 헬스케어", List.of("Spring Boot", "MySQL"), List.of("JWT 인증 구현", "배포 자동화 구성"));
+        return new ResumeResponse(profile, List.of(exp), List.of(), List.of(), LocalDateTime.now());
     }
 
     // ── GET /api/resume ─────────────────────────────────────────────────────────
