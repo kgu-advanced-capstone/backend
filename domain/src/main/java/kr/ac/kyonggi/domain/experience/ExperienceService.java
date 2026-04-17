@@ -12,6 +12,8 @@ public interface ExperienceService {
 
     Experience getById(Long id);
 
+    Experience getByIdWithLock(Long id);
+
     Experience save(Experience experience);
 
     Map<Long, Experience> findByProjectIdsAndUserId(List<Long> projectIds, Long userId);

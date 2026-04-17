@@ -1,12 +1,16 @@
 package kr.ac.kyonggi.domain.project;
 
+import kr.ac.kyonggi.common.exception.ProjectFullException;
+import kr.ac.kyonggi.common.exception.ProjectNotRecruitingException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDate;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ProjectTest {
 
@@ -64,5 +68,37 @@ class ProjectTest {
         Project project = Project.create(defaultCommand());
 
         assertThat(project.isAuthor(99L)).isFalse();
+    }
+
+    // ── addMember() ───────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("addMember()는 RECRUITING 상태에서 currentMemberCount를 1 증가시킨다")
+    void addMember_whenRecruiting_incrementsCount() {
+        Project project = Project.create(defaultCommand());
+
+        project.addMember();
+
+        assertThat(project.getCurrentMemberCount()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("addMember()는 RECRUITING이 아닌 상태에서 ProjectNotRecruitingException을 던진다")
+    void addMember_whenNotRecruiting_throwsProjectNotRecruitingException() {
+        Project project = Project.create(defaultCommand());
+        project.updateStatus(ProjectStatus.IN_PROGRESS);
+
+        assertThatThrownBy(project::addMember)
+                .isInstanceOf(ProjectNotRecruitingException.class);
+    }
+
+    @Test
+    @DisplayName("addMember()는 currentMemberCount가 maxMembers에 도달한 경우 ProjectFullException을 던진다")
+    void addMember_whenFull_throwsProjectFullException() {
+        Project project = Project.create(defaultCommand()); // maxMembers = 4
+        ReflectionTestUtils.setField(project, "currentMemberCount", 4);
+
+        assertThatThrownBy(project::addMember)
+                .isInstanceOf(ProjectFullException.class);
     }
 }

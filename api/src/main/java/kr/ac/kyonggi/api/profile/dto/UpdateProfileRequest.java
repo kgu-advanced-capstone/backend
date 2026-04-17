@@ -18,10 +18,6 @@ public record UpdateProfileRequest(
 
         @Size(max = 200, message = "블로그 URL은 200자 이하여야 합니다.")
         @Schema(description = "기술 블로그 URL", example = "https://velog.io/@honggildong")
-        String blog,
-
-        @Size(max = 500, message = "프로필 이미지 URL은 500자 이하여야 합니다.")
-        @Schema(description = "프로필 이미지 URL", example = "https://cdn.example.com/profile/hong.jpg")
-        String profileImage
+        String blog
 ) {
 }

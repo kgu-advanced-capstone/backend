@@ -20,6 +20,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
@@ -85,9 +86,12 @@ class ProfileControllerTest {
     @WithAnonymousUser
     @DisplayName("PATCH /api/profile - 미인증 요청 401 반환")
     void updateProfile_unauthenticated_returns401() throws JsonProcessingException {
+        MockMultipartFile request = new MockMultipartFile("request", "", MediaType.APPLICATION_JSON_VALUE,
+                toJson(new UpdateProfileRequest("홍길동", null, null, null)).getBytes());
+
         assertThat(mockMvc.patch().uri("/api/profile")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(toJson(new UpdateProfileRequest("홍길동", null, null, null, null))))
+                .multipart()
+                .file(request))
                 .hasStatus(HttpStatus.UNAUTHORIZED);
     }
 
@@ -96,11 +100,14 @@ class ProfileControllerTest {
     @DisplayName("PATCH /api/profile - 유효한 요청 200 및 업데이트된 프로필 반환")
     void updateProfile_validRequest_returns200() throws JsonProcessingException {
         ProfileResponse updated = new ProfileResponse("새이름", EMAIL, null, null, null, null);
-        when(profileApiService.updateProfile(eq(EMAIL), any())).thenReturn(updated);
+        when(profileApiService.updateProfile(eq(EMAIL), any(), any())).thenReturn(updated);
+
+        MockMultipartFile request = new MockMultipartFile("request", "", MediaType.APPLICATION_JSON_VALUE,
+                toJson(new UpdateProfileRequest("새이름", null, null, null)).getBytes());
 
         assertThat(mockMvc.patch().uri("/api/profile")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(toJson(new UpdateProfileRequest("새이름", null, null, null, null))))
+                .multipart()
+                .file(request))
                 .hasStatus(HttpStatus.OK)
                 .bodyJson()
                 .extractingPath("$.name").asString().isEqualTo("새이름");
@@ -110,9 +117,12 @@ class ProfileControllerTest {
     @WithMockUser(username = EMAIL)
     @DisplayName("PATCH /api/profile - 이름 1자 이하 400 반환")
     void updateProfile_nameTooShort_returns400() throws JsonProcessingException {
+        MockMultipartFile request = new MockMultipartFile("request", "", MediaType.APPLICATION_JSON_VALUE,
+                toJson(new UpdateProfileRequest("X", null, null, null)).getBytes());
+
         assertThat(mockMvc.patch().uri("/api/profile")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(toJson(new UpdateProfileRequest("X", null, null, null, null))))
+                .multipart()
+                .file(request))
                 .hasStatus(HttpStatus.BAD_REQUEST);
     }
 

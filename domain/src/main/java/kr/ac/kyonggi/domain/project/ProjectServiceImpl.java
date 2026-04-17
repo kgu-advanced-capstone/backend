@@ -24,7 +24,10 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     @Transactional
     public Project create(Project project) {
-        return projectRepository.save(project);
+        project.addMember();
+        Project saved = projectRepository.save(project);
+        projectMemberRepository.save(ProjectMember.of(new ProjectMemberCreateCommand(saved.getId(), saved.getAuthorId())));
+        return saved;
     }
 
     @Override
@@ -40,13 +43,19 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     @Transactional
-    public ProjectMember apply(Long projectId, Long userId) {
+    public Project apply(Long projectId, Long userId) {
+        Project project = projectRepository.findByIdWithLock(projectId)
+                .orElseThrow(() -> new ProjectNotFoundException("프로젝트를 찾을 수 없습니다: " + projectId));
+
         if (projectMemberRepository.existsByProjectIdAndUserId(projectId, userId)) {
             throw new AlreadyAppliedException("이미 참가 신청한 프로젝트입니다.");
         }
 
-        ProjectMember projectMember = ProjectMember.of(new ProjectMemberCreateCommand(projectId, userId));
-        return projectMemberRepository.save(projectMember);
+        project.addMember();
+
+        projectMemberRepository.save(ProjectMember.of(new ProjectMemberCreateCommand(projectId, userId)));
+
+        return project;
     }
 
     @Override
@@ -80,5 +89,15 @@ public class ProjectServiceImpl implements ProjectService {
     public Map<Long, Long> getMemberCounts(List<Long> projectIds) {
         return projectMemberRepository.findByProjectIdIn(projectIds).stream()
                 .collect(Collectors.groupingBy(ProjectMember::getProjectId, Collectors.counting()));
+    }
+
+    @Override
+    public List<ProjectMember> getParticipants(Long projectId) {
+        return projectMemberRepository.findByProjectId(projectId);
+    }
+
+    @Override
+    public List<ProjectMember> getParticipantsByProjectIds(List<Long> projectIds) {
+        return projectMemberRepository.findByProjectIdIn(projectIds);
     }
 }

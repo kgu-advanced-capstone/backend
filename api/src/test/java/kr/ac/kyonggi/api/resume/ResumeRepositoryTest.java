@@ -54,7 +54,7 @@ class ResumeRepositoryTest {
         Resume resume = resumeRepository.save(Resume.createFor(2L));
 
         resumedExperienceRepository.saveAll(List.of(
-                ResumedExperience.of(resume.getId(), 10L, "AI 기반 프로젝트", List.of("JWT 인증 구현", "CI/CD 파이프라인 구축"))
+                ResumedExperience.of(resume.getId(), 10L, "AI 기반 프로젝트", List.of("JWT 인증 구현", "CI/CD 파이프라인 구축"), List.of("Java", "Spring"))
         ));
 
         List<ResumedExperience> found = resumedExperienceRepository.findByResumeId(resume.getId());
@@ -70,8 +70,8 @@ class ResumeRepositoryTest {
     void resumedExperience_deleteByResumeId() {
         Resume resume = resumeRepository.save(Resume.createFor(3L));
         resumedExperienceRepository.saveAll(List.of(
-                ResumedExperience.of(resume.getId(), 10L, "프로젝트A", List.of("포인트1")),
-                ResumedExperience.of(resume.getId(), 20L, "프로젝트B", List.of("포인트2"))
+                ResumedExperience.of(resume.getId(), 10L, "프로젝트A", List.of("포인트1"), List.of()),
+                ResumedExperience.of(resume.getId(), 20L, "프로젝트B", List.of("포인트2"), List.of())
         ));
 
         resumedExperienceRepository.deleteByResumeId(resume.getId());

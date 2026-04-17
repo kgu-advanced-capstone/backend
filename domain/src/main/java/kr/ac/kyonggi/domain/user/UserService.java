@@ -13,6 +13,8 @@ public interface UserService {
 
     Map<Long, String> getNamesByIds(List<Long> ids);
 
+    List<User> getAllByIds(List<Long> ids);
+
     boolean isEmailTaken(String email);
 
     User updateProfile(Long userId, UpdateProfileCommand command);

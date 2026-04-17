@@ -14,7 +14,7 @@ public interface ProjectService {
 
     Page<Project> search(String category, String keyword, Pageable pageable);
 
-    ProjectMember apply(Long projectId, Long userId);
+    Project apply(Long projectId, Long userId);
 
     void updateStatus(Long projectId, Long requesterId, ProjectStatus status);
 
@@ -25,4 +25,8 @@ public interface ProjectService {
     List<Project> getAllByIds(List<Long> ids);
 
     Map<Long, Long> getMemberCounts(List<Long> projectIds);
+
+    List<ProjectMember> getParticipants(Long projectId);
+
+    List<ProjectMember> getParticipantsByProjectIds(List<Long> projectIds);
 }

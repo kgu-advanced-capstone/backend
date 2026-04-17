@@ -14,8 +14,10 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 @DataJpaTest
 @Import({UserServiceImpl.class, JpaTestConfig.class})
@@ -26,7 +28,7 @@ class UserServiceImplTest {
     private UserService userService;
 
     private User buildUser(String email) {
-        return User.create(new UserCreateCommand(email, "encoded", "테스트", null));
+        return User.create(new UserCreateCommand(email, "encoded", "테스트", null, null));
     }
 
     @Test
@@ -121,5 +123,18 @@ class UserServiceImplTest {
         assertThatThrownBy(() -> userService.updateProfile(99L,
                 new UpdateProfileCommand("이름", null, null, null, null)))
                 .isInstanceOf(UserNotFoundException.class);
+    }
+
+    @Test
+    @DisplayName("getAllByIds()는 ID 목록에 해당하는 User 목록을 반환한다")
+    void getAllByIds_returnsUsers() {
+        User user1 = userService.register(buildUser("a@test.com"));
+        User user2 = userService.register(buildUser("b@test.com"));
+
+        List<User> result = userService.getAllByIds(List.of(user1.getId(), user2.getId()));
+
+        assertThat(result).hasSize(2);
+        assertThat(result).extracting(User::getEmail)
+                .containsExactlyInAnyOrder("a@test.com", "b@test.com");
     }
 }

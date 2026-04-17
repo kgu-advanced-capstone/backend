@@ -1,17 +1,22 @@
 package kr.ac.kyonggi.api.experience;
 
 import kr.ac.kyonggi.api.experience.dto.AiSummaryResponse;
+import kr.ac.kyonggi.api.experience.dto.AiSummaryStatusResponse;
 import kr.ac.kyonggi.api.experience.dto.ExperienceRequest;
 import kr.ac.kyonggi.api.experience.dto.ExperienceResponse;
 import kr.ac.kyonggi.common.exception.ForbiddenException;
+import kr.ac.kyonggi.common.exception.SummarizeAlreadyInProgressException;
+import kr.ac.kyonggi.domain.experience.AiSummaryStatus;
 import kr.ac.kyonggi.domain.experience.Experience;
 import kr.ac.kyonggi.domain.experience.ExperienceCreateCommand;
 import kr.ac.kyonggi.domain.experience.ExperienceService;
+import kr.ac.kyonggi.domain.project.Project;
+import kr.ac.kyonggi.domain.project.ProjectCreateCommand;
 import kr.ac.kyonggi.domain.project.ProjectMemberRepository;
+import kr.ac.kyonggi.domain.project.ProjectService;
 import kr.ac.kyonggi.domain.user.User;
 import kr.ac.kyonggi.domain.user.UserCreateCommand;
 import kr.ac.kyonggi.domain.user.UserService;
-import kr.ac.kyonggi.infrastructure.external.ExperienceSummarizer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,18 +31,21 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class ExperienceApiServiceTest {
 
     @Mock private ExperienceService experienceService;
+    @Mock private ProjectService projectService;
     @Mock private UserService userService;
     @Mock private ProjectMemberRepository projectMemberRepository;
-    @Mock private ExperienceSummarizer experienceSummarizer;
+    @Mock private ExperienceSummarizeTask experienceSummarizeTask;
 
     @InjectMocks
     private ExperienceApiService experienceApiService;
@@ -47,12 +55,16 @@ class ExperienceApiServiceTest {
     private static final Long PROJECT_ID = 10L;
 
     private User user;
+    private Project project;
     private Experience experience;
 
     @BeforeEach
     void setUp() {
-        user = User.create(new UserCreateCommand(EMAIL, "pw", "홍길동", null));
+        user = User.create(new UserCreateCommand(EMAIL, "pw", "홍길동", null, null));
         ReflectionTestUtils.setField(user, "id", USER_ID);
+
+        project = Project.create(new ProjectCreateCommand("프로젝트 제목", "설명", "카테고리", List.of("Java"), 5, null, USER_ID));
+        ReflectionTestUtils.setField(project, "id", PROJECT_ID);
 
         experience = Experience.create(new ExperienceCreateCommand(USER_ID, PROJECT_ID, "로그인 기능을 구현했습니다."));
         ReflectionTestUtils.setField(experience, "id", 100L);
@@ -128,32 +140,70 @@ class ExperienceApiServiceTest {
                 .isInstanceOf(ForbiddenException.class);
     }
 
-    // ── summarize() ───────────────────────────────────────────────────
+
+    // ── startSummarize() ─────────────────────────────────────────────
 
     @Test
-    @DisplayName("summarize()는 본인 경험에 AI 요약을 생성하고 AiSummaryResponse를 반환한다")
-    void summarize_generatesAiSummary_forOwner() {
+    @DisplayName("startSummarize()는 상태가 IN_PROGRESS면 SummarizeAlreadyInProgressException을 던진다")
+    void startSummarize_whenAlreadyInProgress_throwsConflict() {
+        experience.startSummarizing();
+
         given(userService.getByEmail(EMAIL)).willReturn(user);
-        given(experienceService.getById(100L)).willReturn(experience);
-        given(experienceSummarizer.summarize("로그인 기능을 구현했습니다.")).willReturn("JWT 기반 로그인 인증 시스템 구축");
-        given(experienceService.save(any(Experience.class))).willAnswer(inv -> inv.getArgument(0));
+        given(experienceService.getByIdWithLock(100L)).willReturn(experience);
 
-        AiSummaryResponse result = experienceApiService.summarize(100L, EMAIL);
-
-        assertThat(result.id()).isEqualTo(100L);
-        assertThat(result.aiSummary()).isEqualTo("JWT 기반 로그인 인증 시스템 구축");
+        assertThatThrownBy(() -> experienceApiService.startSummarize(100L, EMAIL))
+                .isInstanceOf(SummarizeAlreadyInProgressException.class);
     }
 
     @Test
-    @DisplayName("summarize()는 본인 경험이 아니면 ForbiddenException을 던진다")
-    void summarize_throwsForbiddenException_forNonOwner() {
-        User other = User.create(new UserCreateCommand("other@test.com", "pw", "타인", null));
+    @DisplayName("startSummarize()는 상태를 IN_PROGRESS로 변경하고 트랜잭션 커밋 후 비동기 작업을 시작한다")
+    void startSummarize_success_setsInProgressAndStartsAsync() {
+        TransactionSynchronizationManager.initSynchronization();
+        try {
+            given(userService.getByEmail(EMAIL)).willReturn(user);
+            given(experienceService.getByIdWithLock(100L)).willReturn(experience);
+            given(experienceService.save(any(Experience.class))).willAnswer(inv -> inv.getArgument(0));
+
+            AiSummaryStatusResponse result = experienceApiService.startSummarize(100L, EMAIL);
+
+            assertThat(result.status()).isEqualTo(AiSummaryStatus.IN_PROGRESS);
+
+            TransactionSynchronizationManager.getSynchronizations()
+                    .forEach(TransactionSynchronization::afterCommit);
+
+            verify(experienceSummarizeTask).run(100L, PROJECT_ID);
+        } finally {
+            TransactionSynchronizationManager.clearSynchronization();
+        }
+    }
+
+    @Test
+    @DisplayName("startSummarize()는 본인 경험이 아니면 ForbiddenException을 던진다")
+    void startSummarize_throwsForbiddenException_forNonOwner() {
+        User other = User.create(new UserCreateCommand("other@test.com", "pw", "타인", null, null));
         ReflectionTestUtils.setField(other, "id", 99L);
 
         given(userService.getByEmail("other@test.com")).willReturn(other);
+        given(experienceService.getByIdWithLock(100L)).willReturn(experience);
+
+        assertThatThrownBy(() -> experienceApiService.startSummarize(100L, "other@test.com"))
+                .isInstanceOf(ForbiddenException.class);
+    }
+
+    // ── getSummaryStatus() ────────────────────────────────────────────
+
+    @Test
+    @DisplayName("getSummaryStatus()는 현재 요약 상태를 반환한다")
+    void getSummaryStatus_returnsCurrentStatus() {
+        experience.startSummarizing();
+        experience.completeSummarizing("포인트1\n포인트2");
+
+        given(userService.getByEmail(EMAIL)).willReturn(user);
         given(experienceService.getById(100L)).willReturn(experience);
 
-        assertThatThrownBy(() -> experienceApiService.summarize(100L, "other@test.com"))
-                .isInstanceOf(ForbiddenException.class);
+        AiSummaryStatusResponse result = experienceApiService.getSummaryStatus(100L, EMAIL);
+
+        assertThat(result.status()).isEqualTo(AiSummaryStatus.COMPLETED);
+        assertThat(result.aiSummary()).isEqualTo("포인트1\n포인트2");
     }
 }

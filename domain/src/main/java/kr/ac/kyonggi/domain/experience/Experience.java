@@ -1,6 +1,15 @@
 package kr.ac.kyonggi.domain.experience;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -35,6 +44,10 @@ public class Experience {
     @Column(columnDefinition = "TEXT")
     private String aiSummary;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private AiSummaryStatus aiSummaryStatus = AiSummaryStatus.NONE;
+
     @CreatedDate
     @Column(updatable = false)
     private LocalDateTime createdAt;
@@ -55,5 +68,22 @@ public class Experience {
 
     public void updateAiSummary(String summary) {
         this.aiSummary = summary;
+    }
+
+    public void startSummarizing() {
+        this.aiSummaryStatus = AiSummaryStatus.IN_PROGRESS;
+    }
+
+    public void completeSummarizing(String summary) {
+        this.aiSummary = summary;
+        this.aiSummaryStatus = AiSummaryStatus.COMPLETED;
+    }
+
+    public void failSummarizing() {
+        this.aiSummaryStatus = AiSummaryStatus.FAILED;
+    }
+
+    public boolean isSummarizing() {
+        return this.aiSummaryStatus == AiSummaryStatus.IN_PROGRESS;
     }
 }

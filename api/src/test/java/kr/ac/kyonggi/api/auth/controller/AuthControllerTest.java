@@ -67,7 +67,7 @@ class AuthControllerTest {
 
         assertThat(mockMvc.post().uri("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(toJson(new RegisterRequest(EMAIL, PASSWORD, NAME))))
+                .content(toJson(new RegisterRequest(EMAIL, PASSWORD, NAME, null))))
                 .hasStatus(HttpStatus.CREATED)
                 .bodyJson()
                 .extractingPath("$.email").asString().isEqualTo(EMAIL);
@@ -81,7 +81,7 @@ class AuthControllerTest {
 
         assertThat(mockMvc.post().uri("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(toJson(new RegisterRequest(EMAIL, PASSWORD, NAME))))
+                .content(toJson(new RegisterRequest(EMAIL, PASSWORD, NAME, null))))
                 .hasStatus(HttpStatus.CONFLICT);
     }
 
@@ -90,7 +90,7 @@ class AuthControllerTest {
     void register_invalidEmail() throws JsonProcessingException {
         assertThat(mockMvc.post().uri("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(toJson(new RegisterRequest("not-an-email", PASSWORD, NAME))))
+                .content(toJson(new RegisterRequest("not-an-email", PASSWORD, NAME, null))))
                 .hasStatus(HttpStatus.BAD_REQUEST);
     }
 
@@ -99,7 +99,7 @@ class AuthControllerTest {
     void register_shortPassword() throws JsonProcessingException {
         assertThat(mockMvc.post().uri("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(toJson(new RegisterRequest(EMAIL, "short", NAME))))
+                .content(toJson(new RegisterRequest(EMAIL, "short", NAME, null))))
                 .hasStatus(HttpStatus.BAD_REQUEST);
     }
 

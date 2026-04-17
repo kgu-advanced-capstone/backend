@@ -10,7 +10,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import kr.ac.kyonggi.api.experience.dto.AiSummaryResponse;
+import kr.ac.kyonggi.api.experience.dto.AiSummaryStatusResponse;
 import kr.ac.kyonggi.api.experience.dto.ExperienceRequest;
 import kr.ac.kyonggi.api.experience.dto.ExperienceResponse;
 import org.springframework.http.ResponseEntity;
@@ -33,7 +33,8 @@ public interface ExperienceApi {
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "조회 성공",
-                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = ExperienceResponse.class)))),
+                    content = @Content(array = @ArraySchema(
+                            schema = @Schema(implementation = ExperienceResponse.class)))),
             @ApiResponse(responseCode = "401", description = "인증 필요", content = @Content),
             @ApiResponse(responseCode = "404", description = "프로젝트 없음", content = @Content)
     })
@@ -64,18 +65,39 @@ public interface ExperienceApi {
     );
 
     @Operation(
-            summary = "활동 기록 AI 요약",
-            description = "활동 기록을 AI가 분석하여 요약합니다.",
+            summary = "AI 요약 시작 (비동기)",
+            description = "활동 기록 AI 요약을 비동기로 시작합니다. 상태는 GET /{id}/summarize로 폴링합니다.",
             security = @SecurityRequirement(name = "cookieAuth")
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "요약 성공",
-                    content = @Content(schema = @Schema(implementation = AiSummaryResponse.class))),
+            @ApiResponse(responseCode = "202", description = "요약 시작됨",
+                    content = @Content(schema = @Schema(implementation = AiSummaryStatusResponse.class))),
             @ApiResponse(responseCode = "401", description = "인증 필요", content = @Content),
-            @ApiResponse(responseCode = "404", description = "활동 기록 없음", content = @Content)
+            @ApiResponse(responseCode = "403", description = "본인 경험만 요약 가능", content = @Content),
+            @ApiResponse(responseCode = "404", description = "활동 기록 없음", content = @Content),
+            @ApiResponse(responseCode = "409", description = "이미 요약 진행 중", content = @Content)
     })
     @PostMapping("/{id}/summarize")
-    ResponseEntity<AiSummaryResponse> summarize(
+    ResponseEntity<AiSummaryStatusResponse> startSummarize(
+            @Parameter(description = "활동 기록 ID", example = "1", required = true)
+            @PathVariable Long id,
+            @Parameter(hidden = true) @AuthenticationPrincipal UserDetails userDetails
+    );
+
+    @Operation(
+            summary = "AI 요약 상태 조회 (폴링용)",
+            description = "AI 요약 진행 상태를 조회합니다. status: NONE / IN_PROGRESS / COMPLETED / FAILED",
+            security = @SecurityRequirement(name = "cookieAuth")
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "조회 성공",
+                    content = @Content(schema = @Schema(implementation = AiSummaryStatusResponse.class))),
+            @ApiResponse(responseCode = "401", description = "인증 필요", content = @Content),
+            @ApiResponse(responseCode = "403", description = "본인 경험만 조회 가능", content = @Content),
+            @ApiResponse(responseCode = "404", description = "활동 기록 없음", content = @Content)
+    })
+    @GetMapping("/{id}/summarize")
+    ResponseEntity<AiSummaryStatusResponse> getSummaryStatus(
             @Parameter(description = "활동 기록 ID", example = "1", required = true)
             @PathVariable Long id,
             @Parameter(hidden = true) @AuthenticationPrincipal UserDetails userDetails

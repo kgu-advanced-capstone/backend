@@ -39,8 +39,8 @@ class ProjectMemberRepositoryTest {
 
     @BeforeEach
     void setUp() {
-        user1 = em.persist(User.create(new UserCreateCommand("user1@test.com", "pw", "유저1", null)));
-        user2 = em.persist(User.create(new UserCreateCommand("user2@test.com", "pw", "유저2", null)));
+        user1 = em.persist(User.create(new UserCreateCommand("user1@test.com", "pw", "유저1", null, null)));
+        user2 = em.persist(User.create(new UserCreateCommand("user2@test.com", "pw", "유저2", null, null)));
         project = em.persist(Project.create(new ProjectCreateCommand(
                 "테스트 프로젝트", "설명", "백엔드",
                 List.of("Java"), 4, LocalDate.of(2026, 12, 31), user1.getId()
@@ -100,5 +100,17 @@ class ProjectMemberRepositoryTest {
 
         assertThat(memberships).hasSize(2);
         assertThat(memberships).extracting(ProjectMember::getUserId).containsOnly(user1.getId());
+    }
+
+    @Test
+    @DisplayName("findByProjectId는 해당 프로젝트의 멤버 목록을 반환한다")
+    void findByProjectId_returnsProjectMembers() {
+        addMember(project, user1);
+        addMember(project, user2);
+
+        List<ProjectMember> members = projectMemberRepository.findByProjectId(project.getId());
+
+        assertThat(members).hasSize(2);
+        assertThat(members).extracting(ProjectMember::getProjectId).containsOnly(project.getId());
     }
 }

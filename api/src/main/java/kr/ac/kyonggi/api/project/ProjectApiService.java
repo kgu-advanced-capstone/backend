@@ -1,11 +1,6 @@
 package kr.ac.kyonggi.api.project;
 
-import kr.ac.kyonggi.api.project.dto.CreateProjectRequest;
-import kr.ac.kyonggi.api.project.dto.UpdateProjectStatusRequest;
-import kr.ac.kyonggi.api.project.dto.MyProjectResponse;
-import kr.ac.kyonggi.api.project.dto.ProjectDetailResponse;
-import kr.ac.kyonggi.api.project.dto.ProjectListResponse;
-import kr.ac.kyonggi.api.project.dto.ProjectSummaryResponse;
+import kr.ac.kyonggi.api.project.dto.*;
 import kr.ac.kyonggi.domain.notification.NotificationCreatedEvent;
 import kr.ac.kyonggi.domain.project.Project;
 import kr.ac.kyonggi.domain.project.ProjectCreateCommand;
@@ -54,7 +49,8 @@ public class ProjectApiService {
     public ProjectDetailResponse getProject(Long id) {
         Project project = projectService.getById(id);
         String authorName = userService.getById(project.getAuthorId()).getName();
-        return ProjectDetailResponse.from(project, projectService.getMemberCount(id), authorName);
+        List<ParticipantResponse> participants = buildParticipants(id);
+        return ProjectDetailResponse.from(project, participants, authorName);
     }
 
     @Transactional
@@ -67,18 +63,19 @@ public class ProjectApiService {
                 author.getId()));
 
         Project saved = projectService.create(project);
-        projectService.apply(saved.getId(), author.getId());
         eventPublisher.publishEvent(new NotificationCreatedEvent(
                 author.getId(), "\"" + saved.getTitle() + "\" 프로젝트에 참가했습니다."));
 
-        return ProjectDetailResponse.from(saved, projectService.getMemberCount(saved.getId()), author.getName());
+        List<ParticipantResponse> participants = buildParticipants(saved.getId());
+        return ProjectDetailResponse.from(saved, participants, author.getName());
     }
 
     @Transactional
     public void applyProject(Long projectId, String userEmail) {
         User user = userService.getByEmail(userEmail);
-        projectService.apply(projectId, user.getId());
-        Project project = projectService.getById(projectId);
+
+        Project project = projectService.apply(projectId, user.getId());
+
         eventPublisher.publishEvent(new NotificationCreatedEvent(
                 user.getId(), "\"" + project.getTitle() + "\" 프로젝트에 참가했습니다."));
     }
@@ -89,6 +86,30 @@ public class ProjectApiService {
         projectService.updateStatus(projectId, requester.getId(), request.status());
     }
 
+    private List<ParticipantResponse> buildParticipants(Long projectId) {
+        List<ProjectMember> members = projectService.getParticipants(projectId);
+        List<Long> userIds = members.stream().map(ProjectMember::getUserId).toList();
+        Map<Long, User> userMap = userService.getAllByIds(userIds).stream()
+                .collect(Collectors.toMap(User::getId, u -> u));
+        return members.stream()
+                .filter(m -> userMap.containsKey(m.getUserId()))
+                .map(m -> ParticipantResponse.of(userMap.get(m.getUserId()), m))
+                .toList();
+    }
+
+    private Map<Long, List<ParticipantResponse>> buildParticipantsMap(List<Long> projectIds) {
+        List<ProjectMember> members = projectService.getParticipantsByProjectIds(projectIds);
+        List<Long> userIds = members.stream().map(ProjectMember::getUserId).toList();
+        Map<Long, User> userMap = userService.getAllByIds(userIds).stream()
+                .collect(Collectors.toMap(User::getId, u -> u));
+        return members.stream()
+                .filter(m -> userMap.containsKey(m.getUserId()))
+                .collect(Collectors.groupingBy(
+                        ProjectMember::getProjectId,
+                        Collectors.mapping(m -> ParticipantResponse.of(userMap.get(m.getUserId()), m), Collectors.toList())
+                ));
+    }
+
     public List<MyProjectResponse> getMyProjects(String userEmail) {
         User user = userService.getByEmail(userEmail);
         List<ProjectMember> memberships = projectService.getMembershipsOf(user.getId());
@@ -97,7 +118,7 @@ public class ProjectApiService {
         Map<Long, Project> projectMap = projectService.getAllByIds(projectIds).stream()
                 .collect(Collectors.toMap(Project::getId, p -> p));
 
-        Map<Long, Long> memberCounts = projectService.getMemberCounts(projectIds);
+        Map<Long, List<ParticipantResponse>> participantsMap = buildParticipantsMap(projectIds);
         List<Long> authorIds = projectMap.values().stream().map(Project::getAuthorId).toList();
         Map<Long, String> authorNames = userService.getNamesByIds(authorIds);
 
@@ -106,7 +127,7 @@ public class ProjectApiService {
                 .map(m -> {
                     Project p = projectMap.get(m.getProjectId());
                     return MyProjectResponse.from(p, m, user.getId(),
-                            memberCounts.getOrDefault(p.getId(), 0L),
+                            participantsMap.getOrDefault(p.getId(), List.of()),
                             authorNames.getOrDefault(p.getAuthorId(), ""));
                 })
                 .toList();

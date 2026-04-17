@@ -1,6 +1,19 @@
 package kr.ac.kyonggi.domain.project;
 
-import jakarta.persistence.*;
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Table;
+import kr.ac.kyonggi.common.exception.ProjectFullException;
+import kr.ac.kyonggi.common.exception.ProjectNotRecruitingException;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -40,6 +53,9 @@ public class Project {
     @Column(nullable = false)
     private int maxMembers;
 
+    @Column(nullable = false)
+    private int currentMemberCount = 0;
+
     private LocalDate deadline;
 
     @Enumerated(EnumType.STRING)
@@ -66,6 +82,16 @@ public class Project {
         this.deadline = command.deadline();
         this.status = ProjectStatus.RECRUITING;
         this.authorId = command.authorId();
+    }
+
+    public void addMember() {
+        if (status != ProjectStatus.RECRUITING) {
+            throw new ProjectNotRecruitingException("모집 중인 프로젝트가 아닙니다.");
+        }
+        if (currentMemberCount >= maxMembers) {
+            throw new ProjectFullException("프로젝트 인원이 이미 가득 찼습니다.");
+        }
+        this.currentMemberCount++;
     }
 
     public void updateStatus(ProjectStatus status) {

@@ -11,12 +11,22 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import kr.ac.kyonggi.api.project.dto.*;
+import kr.ac.kyonggi.api.project.dto.CreateProjectRequest;
+import kr.ac.kyonggi.api.project.dto.MyProjectResponse;
+import kr.ac.kyonggi.api.project.dto.ProjectDetailResponse;
+import kr.ac.kyonggi.api.project.dto.ProjectListResponse;
+import kr.ac.kyonggi.api.project.dto.UpdateProjectStatusRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 
 import java.util.List;
 
@@ -51,7 +61,8 @@ public interface ProjectApi {
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "조회 성공",
-                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = MyProjectResponse.class)))),
+                    content = @Content(array = @ArraySchema(
+                            schema = @Schema(implementation = MyProjectResponse.class)))),
             @ApiResponse(responseCode = "401", description = "인증 필요", content = @Content)
     })
     @GetMapping("/my")
