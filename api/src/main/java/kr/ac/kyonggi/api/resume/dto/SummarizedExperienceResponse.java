@@ -14,6 +14,12 @@ public record SummarizedExperienceResponse(
         String projectTitle,
 
         @ArraySchema(
+                arraySchema = @Schema(description = "프로젝트 기술 스택 목록"),
+                schema = @Schema(type = "string", example = "Spring Boot")
+        )
+        List<String> skills,
+
+        @ArraySchema(
                 arraySchema = @Schema(description = "AI 요약 핵심 포인트 목록"),
                 schema = @Schema(type = "string", example = "REST API 연동 경험")
         )
@@ -23,6 +29,7 @@ public record SummarizedExperienceResponse(
         return new SummarizedExperienceResponse(
                 experience.getProjectId(),
                 experience.getProjectTitle(),
+                experience.getSkills(),
                 experience.getKeyPoints()
         );
     }
