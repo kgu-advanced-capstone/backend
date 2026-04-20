@@ -55,10 +55,10 @@ public class JwtTokenProvider {
         Claims claims = parseClaims(token);
         String role   = claims.get("role", String.class);
 
-        UserDetails principal = new User(
-                claims.getSubject(), "",
-                List.of(new SimpleGrantedAuthority(role))
-        );
+        List<SimpleGrantedAuthority> authorities = (role != null && !role.isBlank())
+                ? List.of(new SimpleGrantedAuthority(role))
+                : List.of();
+        UserDetails principal = new User(claims.getSubject(), "", authorities);
         return new UsernamePasswordAuthenticationToken(
                 principal, null, principal.getAuthorities()
         );

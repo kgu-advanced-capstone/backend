@@ -2,6 +2,7 @@ package kr.ac.kyonggi.domain.user;
 
 import kr.ac.kyonggi.common.exception.UserNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -55,7 +56,16 @@ public class UserServiceImpl implements UserService {
     public User findOrCreateSocialUser(UserSocialCreateCommand command) {
         return userRepository
                 .findByProviderIdAndProvider(command.providerId(), command.provider())
-                .orElseGet(() -> userRepository.save(User.ofSocial(command)));
+                .orElseGet(() -> {
+                    try {
+                        return userRepository.save(User.ofSocial(command));
+                    } catch (DataIntegrityViolationException e) {
+                        return userRepository
+                                .findByProviderIdAndProvider(command.providerId(), command.provider())
+                                .orElseThrow(() -> new UserNotFoundException(
+                                        "소셜 사용자 저장 충돌 후 재조회 실패: " + command.providerId()));
+                    }
+                });
     }
 
     @Override

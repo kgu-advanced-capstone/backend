@@ -26,12 +26,13 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
             Authentication authentication) throws IOException {
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
         String email = oAuth2User.getAttribute("email");
-        String role  = authentication.getAuthorities().iterator().next().getAuthority();
+        String role = authentication.getAuthorities().isEmpty()
+                ? "ROLE_USER"
+                : authentication.getAuthorities().iterator().next().getAuthority();
         String token = jwtTokenProvider.generate(email, role);
 
         String targetUrl = UriComponentsBuilder.fromUriString(redirectUri)
-                .queryParam("token", token)
-                .build().toUriString();
+                .build().toUriString() + "#token=" + token;
 
         response.sendRedirect(targetUrl);
     }

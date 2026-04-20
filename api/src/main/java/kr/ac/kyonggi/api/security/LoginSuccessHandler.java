@@ -24,7 +24,9 @@ public class LoginSuccessHandler implements AuthenticationSuccessHandler {
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
             Authentication authentication) throws IOException {
         UserDetails principal = (UserDetails) authentication.getPrincipal();
-        String role = principal.getAuthorities().iterator().next().getAuthority();
+        String role = principal.getAuthorities().isEmpty()
+                ? "ROLE_USER"
+                : principal.getAuthorities().iterator().next().getAuthority();
         String token = jwtTokenProvider.generate(principal.getUsername(), role);
 
         response.setStatus(HttpServletResponse.SC_OK);
