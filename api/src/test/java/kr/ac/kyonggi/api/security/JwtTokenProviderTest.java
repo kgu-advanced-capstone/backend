@@ -14,6 +14,8 @@ import java.util.Date;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+
+
 class JwtTokenProviderTest {
 
     private static final String VALID_SECRET = "test-secret-key-for-jwt-testing-32-characters-long";
@@ -71,12 +73,41 @@ class JwtTokenProviderTest {
     @Test
     @DisplayName("validate: 만료된 토큰이면 false 반환 — JwtException catch 분기")
     void validate_expiredToken_returnsFalse() {
-        // 만료 시간 0ms → 즉시 만료
-        JwtTokenProvider shortLived = new JwtTokenProvider(VALID_SECRET, 0L);
-        String expiredToken = shortLived.generate("user@test.com", "ROLE_USER");
-
-        // validate()가 JwtException을 잡아 false를 반환하는지 확인
+        SecretKey key = Keys.hmacShaKeyFor(VALID_SECRET.getBytes(StandardCharsets.UTF_8));
+        String expiredToken = Jwts.builder()
+                .subject("user@test.com")
+                .claim("role", "ROLE_USER")
+                .issuedAt(new Date(0))
+                .expiration(new Date(1))
+                .signWith(key)
+                .compact();
         assertThat(provider.validate(expiredToken)).isFalse();
+    }
+
+    @Test
+    @DisplayName("validate: subject 없는 토큰이면 false 반환")
+    void validate_tokenMissingSubject_returnsFalse() {
+        SecretKey key = Keys.hmacShaKeyFor(VALID_SECRET.getBytes(StandardCharsets.UTF_8));
+        String noSubjectToken = Jwts.builder()
+                .claim("role", "ROLE_USER")
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + EXPIRATION_MS))
+                .signWith(key)
+                .compact();
+        assertThat(provider.validate(noSubjectToken)).isFalse();
+    }
+
+    @Test
+    @DisplayName("validate: role 클레임 없는 토큰이면 false 반환")
+    void validate_tokenMissingRole_returnsFalse() {
+        SecretKey key = Keys.hmacShaKeyFor(VALID_SECRET.getBytes(StandardCharsets.UTF_8));
+        String noRoleToken = Jwts.builder()
+                .subject("user@test.com")
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + EXPIRATION_MS))
+                .signWith(key)
+                .compact();
+        assertThat(provider.validate(noRoleToken)).isFalse();
     }
 
     @Test

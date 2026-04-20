@@ -27,8 +27,14 @@ public class JwtTokenProvider {
             @Value("${jwt.secret}") String secret,
             @Value("${jwt.expiration-ms}") long expirationMs
     ) {
+        if (secret == null || secret.trim().isEmpty()) {
+            throw new IllegalArgumentException("jwt.secret은 비어 있을 수 없습니다.");
+        }
         if (secret.getBytes(StandardCharsets.UTF_8).length < 32) {
             throw new IllegalArgumentException("jwt.secret은 최소 32바이트(256비트) 이상이어야 합니다.");
+        }
+        if (expirationMs <= 0) {
+            throw new IllegalArgumentException("jwt.expiration-ms는 0보다 커야 합니다.");
         }
         this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         this.expirationMs = expirationMs;
@@ -37,6 +43,9 @@ public class JwtTokenProvider {
     // JWT 토큰 생성
     // email을 subject로, role을 claim으로 저장
     public String generate(String email, String role) {
+        if (role == null || role.isBlank()) {
+            throw new IllegalArgumentException("role은 비어 있을 수 없습니다.");
+        }
         Date now    = new Date();
         Date expiry = new Date(now.getTime() + expirationMs);
 
@@ -65,11 +74,14 @@ public class JwtTokenProvider {
     }
 
     // 토큰 유효성 검증
-    // 만료되거나 변조된 토큰이면 false 반환
+    // 만료되거나 변조된 토큰이면 false 반환, subject/role 클레임 누락 시에도 false
     public boolean validate(String token) {
         try {
-            parseClaims(token);
-            return true;
+            Claims claims = parseClaims(token);
+            String subject = claims.getSubject();
+            String role    = claims.get("role", String.class);
+            return subject != null && !subject.isBlank()
+                    && role != null && !role.isBlank();
         } catch (JwtException | IllegalArgumentException e) {
             return false;
         }

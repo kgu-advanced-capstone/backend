@@ -1,5 +1,6 @@
 package kr.ac.kyonggi.domain.user;
 
+import kr.ac.kyonggi.common.exception.UserAlreadyExistsException;
 import kr.ac.kyonggi.common.exception.UserNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -60,10 +61,22 @@ public class UserServiceImpl implements UserService {
                     try {
                         return userRepository.save(User.ofSocial(command));
                     } catch (DataIntegrityViolationException e) {
+                        // (provider_id, provider) 경쟁 조건 → 재조회
                         return userRepository
                                 .findByProviderIdAndProvider(command.providerId(), command.provider())
-                                .orElseThrow(() -> new UserNotFoundException(
-                                        "소셜 사용자 저장 충돌 후 재조회 실패: " + command.providerId()));
+                                .orElseGet(() -> {
+                                    // email 충돌 여부 구별
+                                    String email = command.email();
+                                    if (email != null && !email.isBlank()) {
+                                        userRepository.findByEmail(email).ifPresent(existing ->  {
+                                            throw new UserAlreadyExistsException(
+                                                    "이미 " + existing.getProvider().name()
+                                                    + " 계정으로 가입된 이메일입니다: " + email);
+                                        });
+                                    }
+                                    throw new UserNotFoundException(
+                                            "소셜 사용자 저장 충돌 후 재조회 실패: " + command.providerId(), e);
+                                });
                     }
                 });
     }
