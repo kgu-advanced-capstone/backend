@@ -1,7 +1,9 @@
 package kr.ac.kyonggi.domain.user;
 
+import kr.ac.kyonggi.common.exception.UserAlreadyExistsException;
 import kr.ac.kyonggi.common.exception.UserNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -48,6 +50,35 @@ public class UserServiceImpl implements UserService {
     @Override
     public boolean isEmailTaken(String email) {
         return userRepository.existsByEmail(email);
+    }
+
+    @Override
+    @Transactional
+    public User findOrCreateSocialUser(UserSocialCreateCommand command) {
+        return userRepository
+                .findByProviderIdAndProvider(command.providerId(), command.provider())
+                .orElseGet(() -> {
+                    try {
+                        return userRepository.save(User.ofSocial(command));
+                    } catch (DataIntegrityViolationException e) {
+                        // (provider_id, provider) 경쟁 조건 → 재조회
+                        return userRepository
+                                .findByProviderIdAndProvider(command.providerId(), command.provider())
+                                .orElseGet(() -> {
+                                    // email 충돌 여부 구별
+                                    String email = command.email();
+                                    if (email != null && !email.isBlank()) {
+                                        userRepository.findByEmail(email).ifPresent(existing ->  {
+                                            throw new UserAlreadyExistsException(
+                                                    "이미 " + existing.getProvider().name()
+                                                    + " 계정으로 가입된 이메일입니다: " + email);
+                                        });
+                                    }
+                                    throw new UserNotFoundException(
+                                            "소셜 사용자 저장 충돌 후 재조회 실패: " + command.providerId(), e);
+                                });
+                    }
+                });
     }
 
     @Override

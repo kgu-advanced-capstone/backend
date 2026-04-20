@@ -18,4 +18,6 @@ public interface UserService {
     boolean isEmailTaken(String email);
 
     User updateProfile(Long userId, UpdateProfileCommand command);
+
+    User findOrCreateSocialUser(UserSocialCreateCommand command);
 }
