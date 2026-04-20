@@ -1,5 +1,7 @@
 package kr.ac.kyonggi.api.security;
 
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -13,6 +15,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.core.context.SecurityContextHolder;
+
+import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
+import java.util.Date;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
@@ -102,8 +108,14 @@ class JwtAuthenticationFilterTest {
     @Test
     @DisplayName("만료된 토큰이면 SecurityContext에 Authentication 미설정")
     void doFilterInternal_expiredToken_noAuthentication() throws Exception {
-        JwtTokenProvider shortLived = new JwtTokenProvider(VALID_SECRET, 0L);
-        String expiredToken = shortLived.generate("user@test.com", "ROLE_USER");
+        SecretKey key = Keys.hmacShaKeyFor(VALID_SECRET.getBytes(StandardCharsets.UTF_8));
+        String expiredToken = Jwts.builder()
+                .subject("user@test.com")
+                .claim("role", "ROLE_USER")
+                .issuedAt(new Date(0))
+                .expiration(new Date(1))
+                .signWith(key)
+                .compact();
 
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader("Authorization", "Bearer " + expiredToken);
