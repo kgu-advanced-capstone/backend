@@ -7,8 +7,13 @@ import kr.ac.kyonggi.api.config.SecurityConfig;
 import kr.ac.kyonggi.api.education.dto.EducationRequest;
 import kr.ac.kyonggi.api.education.dto.EducationResponse;
 import kr.ac.kyonggi.api.security.CustomUserDetailsService;
+import kr.ac.kyonggi.api.security.JwtAuthenticationFilter;
+import kr.ac.kyonggi.api.security.JwtTokenProvider;
 import kr.ac.kyonggi.api.security.LoginSuccessHandler;
+import kr.ac.kyonggi.api.security.OAuth2LoginSuccessHandler;
+import kr.ac.kyonggi.common.exception.CustomAuthenticationEntryPoint;
 import kr.ac.kyonggi.common.exception.EducationNotFoundException;
+import kr.ac.kyonggi.infrastructure.oauth.CustomOAuth2UserService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,7 +37,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 
 @WebMvcTest(EducationController.class)
-@Import({SecurityConfig.class, LoginSuccessHandler.class})
+@Import({SecurityConfig.class, LoginSuccessHandler.class, JwtTokenProvider.class, JwtAuthenticationFilter.class, CustomAuthenticationEntryPoint.class})
 @ActiveProfiles("test")
 class EducationControllerTest {
 
@@ -47,6 +52,12 @@ class EducationControllerTest {
 
     @MockitoBean
     AuthApiService authApiService;
+
+    @MockitoBean
+    CustomOAuth2UserService customOAuth2UserService;
+
+    @MockitoBean
+    OAuth2LoginSuccessHandler oauth2LoginSuccessHandler;
 
     private static final String EMAIL = "test@test.com";
 

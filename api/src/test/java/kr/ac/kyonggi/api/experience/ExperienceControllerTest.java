@@ -6,9 +6,14 @@ import kr.ac.kyonggi.api.experience.dto.AiSummaryStatusResponse;
 import kr.ac.kyonggi.api.experience.dto.ExperienceResponse;
 import kr.ac.kyonggi.domain.experience.AiSummaryStatus;
 import kr.ac.kyonggi.api.security.CustomUserDetailsService;
+import kr.ac.kyonggi.api.security.JwtAuthenticationFilter;
+import kr.ac.kyonggi.api.security.JwtTokenProvider;
 import kr.ac.kyonggi.api.security.LoginSuccessHandler;
+import kr.ac.kyonggi.api.security.OAuth2LoginSuccessHandler;
+import kr.ac.kyonggi.common.exception.CustomAuthenticationEntryPoint;
 import kr.ac.kyonggi.common.exception.ExperienceNotFoundException;
 import kr.ac.kyonggi.common.exception.ForbiddenException;
+import kr.ac.kyonggi.infrastructure.oauth.CustomOAuth2UserService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +35,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 @WebMvcTest(ExperienceController.class)
-@Import({SecurityConfig.class, LoginSuccessHandler.class})
+@Import({SecurityConfig.class, LoginSuccessHandler.class, JwtTokenProvider.class, JwtAuthenticationFilter.class, CustomAuthenticationEntryPoint.class})
 @ActiveProfiles("test")
 class ExperienceControllerTest {
 
@@ -45,6 +50,12 @@ class ExperienceControllerTest {
 
     @MockitoBean
     CustomUserDetailsService userDetailsService;
+
+    @MockitoBean
+    CustomOAuth2UserService customOAuth2UserService;
+
+    @MockitoBean
+    OAuth2LoginSuccessHandler oauth2LoginSuccessHandler;
 
     private static final String EMAIL = "test@test.com";
     private static final ExperienceResponse SAMPLE_RESPONSE =
