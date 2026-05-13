@@ -2,8 +2,6 @@ package kr.ac.kyonggi.domain.user;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -29,7 +27,7 @@ public class User {
     @Column(unique = true, nullable = false)
     private String email;
 
-    @Column(nullable = true)
+    @Column(nullable = false)
     private String password;
 
     @Column(nullable = false)
@@ -42,17 +40,6 @@ public class User {
     private String github;
 
     private String blog;
-
-    @Column(name = "provider_id")
-    private String providerId;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "provider", nullable = false)
-    private OAuthProvider provider;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private Role role;
 
     @CreatedDate
     private LocalDateTime createdAt;
@@ -70,20 +57,6 @@ public class User {
         this.name = command.name();
         this.profileImage = command.profileImage();
         this.phone = command.phone();
-        this.provider = OAuthProvider.LOCAL;
-        this.role = Role.USER;
-    }
-
-    public static User ofSocial(UserSocialCreateCommand command) {
-        User user = new User();
-        user.email = command.email();
-        user.name = command.name();
-        user.profileImage = command.profileImage();
-        user.providerId = command.providerId();
-        user.provider = command.provider();
-        user.role = Role.USER;
-        user.password = null;
-        return user;
     }
 
     public void updateProfile(UpdateProfileCommand command) {
