@@ -6,13 +6,8 @@ import kr.ac.kyonggi.api.profile.dto.ProfileResponse;
 import kr.ac.kyonggi.api.resume.dto.ResumeResponse;
 import kr.ac.kyonggi.api.resume.dto.SummarizedExperienceResponse;
 import kr.ac.kyonggi.api.security.CustomUserDetailsService;
-import kr.ac.kyonggi.api.security.JwtAuthenticationFilter;
-import kr.ac.kyonggi.api.security.JwtTokenProvider;
 import kr.ac.kyonggi.api.security.LoginSuccessHandler;
-import kr.ac.kyonggi.api.security.OAuth2LoginSuccessHandler;
-import kr.ac.kyonggi.common.exception.CustomAuthenticationEntryPoint;
 import kr.ac.kyonggi.common.exception.ResumeNotFoundException;
-import kr.ac.kyonggi.infrastructure.oauth.CustomOAuth2UserService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,7 +29,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 
 @WebMvcTest(ResumeController.class)
-@Import({SecurityConfig.class, LoginSuccessHandler.class, JwtTokenProvider.class, JwtAuthenticationFilter.class, CustomAuthenticationEntryPoint.class})
+@Import({SecurityConfig.class, LoginSuccessHandler.class})
 @ActiveProfiles("test")
 class ResumeControllerTest {
 
@@ -46,12 +41,6 @@ class ResumeControllerTest {
 
     @MockitoBean
     CustomUserDetailsService userDetailsService;
-
-    @MockitoBean
-    CustomOAuth2UserService customOAuth2UserService;
-
-    @MockitoBean
-    OAuth2LoginSuccessHandler oauth2LoginSuccessHandler;
 
     @MockitoBean
     AuthApiService authApiService;
