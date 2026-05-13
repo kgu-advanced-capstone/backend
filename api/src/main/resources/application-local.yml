@@ -3,7 +3,7 @@ spring:
     name: api
   ai:
     openai:
-      api-key: ${OPENAI_API_KEY:}
+      api-key: ${OPENAI_API_KEY:dummy-key-for-local}
       chat:
         options:
           model: gpt-4o-mini
@@ -55,21 +55,21 @@ oauth2:
 cloud:
   aws:
     s3:
-      endpoint: ${SUPABASE_S3_ENDPOINT}
+      endpoint: ${SUPABASE_S3_ENDPOINT:http://localhost}
       path-style-access-enabled: true
     region:
       static: ${SUPABASE_S3_REGION:ap-southeast-1}
       auto: false
     credentials:
-      access-key: ${SUPABASE_S3_ACCESS_KEY}
-      secret-key: ${SUPABASE_S3_SECRET_KEY}
+      access-key: ${SUPABASE_S3_ACCESS_KEY:local-access-key}
+      secret-key: ${SUPABASE_S3_SECRET_KEY:local-secret-key}
     stack:
       auto: false
 
 storage:
   s3:
-    bucket: ${SUPABASE_S3_BUCKET}
-    endpoint: ${SUPABASE_S3_ENDPOINT}
+    bucket: ${SUPABASE_S3_BUCKET:local-bucket}
+    endpoint: ${SUPABASE_S3_ENDPOINT:http://localhost}
   local:
     root-dir: ./uploads
     base-url: http://pcserver.cloud/files

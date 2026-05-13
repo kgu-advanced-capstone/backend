@@ -3,6 +3,7 @@ package kr.ac.kyonggi.api.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletResponse;
 import kr.ac.kyonggi.api.security.CustomUserDetailsService;
+import kr.ac.kyonggi.api.security.HttpCookieOAuth2AuthorizationRequestRepository;
 import kr.ac.kyonggi.api.security.JsonLoginFilter;
 import kr.ac.kyonggi.api.security.JwtAuthenticationFilter;
 import kr.ac.kyonggi.api.security.JwtTokenProvider;
@@ -54,7 +55,8 @@ public class SecurityConfig {
             JwtTokenProvider jwtTokenProvider,
             CustomOAuth2UserService customOAuth2UserService,
             OAuth2LoginSuccessHandler oauth2LoginSuccessHandler,
-            CustomAuthenticationEntryPoint customAuthenticationEntryPoint
+            CustomAuthenticationEntryPoint customAuthenticationEntryPoint,
+            HttpCookieOAuth2AuthorizationRequestRepository cookieAuthorizationRequestRepository
     ) throws Exception {
 
         JsonLoginFilter jsonLoginFilter = new JsonLoginFilter(authConfig.getAuthenticationManager(), objectMapper);
@@ -74,10 +76,16 @@ public class SecurityConfig {
                         .requestMatchers("/actuator/**").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/api/auth/register", "/api/auth/login", "/api/auth/logout").permitAll()
+                        .requestMatchers("/oauth2/authorization/**", "/login/oauth2/code/**").permitAll()
                         .requestMatchers("/files/**").permitAll()
+                        .requestMatchers("/error").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/projects", "/api/projects/*").permitAll()
                         .anyRequest().authenticated())
                 .oauth2Login(oauth2 -> oauth2
+                        .authorizationEndpoint(auth -> auth
+                                .authorizationRequestRepository(cookieAuthorizationRequestRepository))
+                        .redirectionEndpoint(redirection -> redirection
+                                .baseUri("/login/oauth2/code/*"))
                         .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
                         .successHandler(oauth2LoginSuccessHandler)
                         .failureHandler((request, response, exception) ->
