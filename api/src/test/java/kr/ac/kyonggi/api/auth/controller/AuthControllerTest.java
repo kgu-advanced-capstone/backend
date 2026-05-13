@@ -7,6 +7,7 @@ import kr.ac.kyonggi.api.auth.AuthController;
 import kr.ac.kyonggi.api.auth.dto.RegisterRequest;
 import kr.ac.kyonggi.api.auth.dto.UserResponse;
 import kr.ac.kyonggi.api.security.CustomUserDetailsService;
+import kr.ac.kyonggi.api.security.HttpCookieOAuth2AuthorizationRequestRepository;
 import kr.ac.kyonggi.api.security.JwtAuthenticationFilter;
 import kr.ac.kyonggi.api.security.JwtTokenProvider;
 import kr.ac.kyonggi.api.security.LoginSuccessHandler;
@@ -33,7 +34,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 @WebMvcTest(AuthController.class)
-@Import({SecurityConfig.class, LoginSuccessHandler.class, JwtTokenProvider.class, JwtAuthenticationFilter.class, CustomAuthenticationEntryPoint.class})
+@Import({SecurityConfig.class, LoginSuccessHandler.class, JwtTokenProvider.class, JwtAuthenticationFilter.class, CustomAuthenticationEntryPoint.class, HttpCookieOAuth2AuthorizationRequestRepository.class})
 @ActiveProfiles("test")
 class AuthControllerTest {
 

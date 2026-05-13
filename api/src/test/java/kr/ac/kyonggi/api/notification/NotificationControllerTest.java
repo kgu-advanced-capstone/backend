@@ -4,6 +4,7 @@ import kr.ac.kyonggi.api.auth.AuthApiService;
 import kr.ac.kyonggi.api.config.SecurityConfig;
 import kr.ac.kyonggi.api.notification.dto.NotificationResponse;
 import kr.ac.kyonggi.api.security.CustomUserDetailsService;
+import kr.ac.kyonggi.api.security.HttpCookieOAuth2AuthorizationRequestRepository;
 import kr.ac.kyonggi.api.security.JwtAuthenticationFilter;
 import kr.ac.kyonggi.api.security.JwtTokenProvider;
 import kr.ac.kyonggi.api.security.LoginSuccessHandler;
@@ -32,7 +33,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 
 @WebMvcTest(NotificationController.class)
-@Import({SecurityConfig.class, LoginSuccessHandler.class, JwtTokenProvider.class, JwtAuthenticationFilter.class, CustomAuthenticationEntryPoint.class})
+@Import({SecurityConfig.class, LoginSuccessHandler.class, JwtTokenProvider.class, JwtAuthenticationFilter.class, CustomAuthenticationEntryPoint.class, HttpCookieOAuth2AuthorizationRequestRepository.class})
 @ActiveProfiles("test")
 class NotificationControllerTest {
 

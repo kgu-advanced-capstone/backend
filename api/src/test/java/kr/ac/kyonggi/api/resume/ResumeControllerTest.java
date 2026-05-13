@@ -6,6 +6,7 @@ import kr.ac.kyonggi.api.profile.dto.ProfileResponse;
 import kr.ac.kyonggi.api.resume.dto.ResumeResponse;
 import kr.ac.kyonggi.api.resume.dto.SummarizedExperienceResponse;
 import kr.ac.kyonggi.api.security.CustomUserDetailsService;
+import kr.ac.kyonggi.api.security.HttpCookieOAuth2AuthorizationRequestRepository;
 import kr.ac.kyonggi.api.security.JwtAuthenticationFilter;
 import kr.ac.kyonggi.api.security.JwtTokenProvider;
 import kr.ac.kyonggi.api.security.LoginSuccessHandler;
@@ -34,7 +35,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 
 @WebMvcTest(ResumeController.class)
-@Import({SecurityConfig.class, LoginSuccessHandler.class, JwtTokenProvider.class, JwtAuthenticationFilter.class, CustomAuthenticationEntryPoint.class})
+@Import({SecurityConfig.class, LoginSuccessHandler.class, JwtTokenProvider.class, JwtAuthenticationFilter.class, CustomAuthenticationEntryPoint.class, HttpCookieOAuth2AuthorizationRequestRepository.class})
 @ActiveProfiles("test")
 class ResumeControllerTest {
 
