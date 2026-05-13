@@ -26,12 +26,31 @@ spring:
       host: localhost
       port: 6379
 
-sentry:
-  enabled: false # 로컬에선 Sentry를 끕니다.
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID:local-client-id}
+            client-secret: ${GOOGLE_CLIENT_SECRET:local-client-secret}
+            scope:
+              - email
+              - profile
 
   autoconfigure:
     exclude:
       - io.awspring.cloud.autoconfigure.s3.S3AutoConfiguration
+
+sentry:
+  enabled: false
+
+# 로컬 전용 JWT 시크릿 — 운영 환경에서는 반드시 환경 변수로 주입
+jwt:
+  secret: local-dev-secret-key-32-characters-long
+  expiration-ms: 3600000
+
+oauth2:
+  redirect-uri: http://localhost:3000/oauth2/callback
 
 cloud:
   aws:
@@ -54,12 +73,3 @@ storage:
   local:
     root-dir: ./uploads
     base-url: http://pcserver.cloud/files
-
-server:
-  servlet:
-    session:
-      cookie:
-        http-only: true
-        same-site: lax
-        name: JSESSIONID
-      timeout: 30m
