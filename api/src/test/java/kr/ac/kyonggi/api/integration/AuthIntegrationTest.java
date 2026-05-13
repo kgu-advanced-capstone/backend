@@ -8,7 +8,6 @@ import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.*;
 import org.springframework.test.context.ActiveProfiles;
 
-import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -24,8 +23,8 @@ class AuthIntegrationTest {
     @DisplayName("회원가입 → 로그인 → /me 전체 흐름 테스트")
     void fullAuthFlow_register_login_me() {
         // 1. 회원가입
-        HttpHeaders registerHeaders = new HttpHeaders();
-        registerHeaders.setContentType(MediaType.APPLICATION_JSON);
+        HttpHeaders jsonHeaders = new HttpHeaders();
+        jsonHeaders.setContentType(MediaType.APPLICATION_JSON);
         String registerBody = """
                 {
                   "email": "flow@test.com",
@@ -34,13 +33,11 @@ class AuthIntegrationTest {
                 }
                 """;
         ResponseEntity<Map> registerResponse = restTemplate.exchange(
-                "/api/auth/register",
-                HttpMethod.POST,
-                new HttpEntity<>(registerBody, registerHeaders),
-                Map.class);
+                "/api/auth/register", HttpMethod.POST,
+                new HttpEntity<>(registerBody, jsonHeaders), Map.class);
         assertThat(registerResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
 
-        // 2. 로그인
+        // 2. 로그인 → accessToken 반환
         String loginBody = """
                 {
                   "email": "flow@test.com",
@@ -48,52 +45,38 @@ class AuthIntegrationTest {
                 }
                 """;
         ResponseEntity<Map> loginResponse = restTemplate.exchange(
-                "/api/auth/login",
-                HttpMethod.POST,
-                new HttpEntity<>(loginBody, registerHeaders),
-                Map.class);
+                "/api/auth/login", HttpMethod.POST,
+                new HttpEntity<>(loginBody, jsonHeaders), Map.class);
         assertThat(loginResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(loginResponse.getBody()).containsKey("email");
+        assertThat(loginResponse.getBody()).containsKey("accessToken");
+        String accessToken = (String) loginResponse.getBody().get("accessToken");
 
-        // 3. Set-Cookie에서 JSESSIONID 추출
-        List<String> cookies = loginResponse.getHeaders().get(HttpHeaders.SET_COOKIE);
-        assertThat(cookies).isNotNull();
-        String sessionCookie = cookies.stream()
-                .filter(c -> c.startsWith("JSESSIONID"))
-                .findFirst()
-                .orElseThrow(() -> new AssertionError("JSESSIONID 쿠키가 없습니다."));
-        String jsessionId = sessionCookie.split(";")[0];
-
-        // 4. 세션 쿠키로 /me 접근
-        HttpHeaders meHeaders = new HttpHeaders();
-        meHeaders.set(HttpHeaders.COOKIE, jsessionId);
+        // 3. Bearer 토큰으로 /me 접근
+        HttpHeaders authHeaders = new HttpHeaders();
+        authHeaders.setBearerAuth(accessToken);
         ResponseEntity<Map> meResponse = restTemplate.exchange(
-                "/api/auth/me",
-                HttpMethod.GET,
-                new HttpEntity<>(meHeaders),
-                Map.class);
+                "/api/auth/me", HttpMethod.GET,
+                new HttpEntity<>(authHeaders), Map.class);
         assertThat(meResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(meResponse.getBody()).containsEntry("email", "flow@test.com");
         assertThat(meResponse.getBody()).containsEntry("name", "흐름테스트");
     }
 
     @Test
-    @DisplayName("세션 없이 /me 접근 시 401 반환")
-    void me_withoutSession_returns401() {
+    @DisplayName("토큰 없이 /me 접근 시 401 반환")
+    void me_withoutToken_returns401() {
         ResponseEntity<Map> response = restTemplate.exchange(
-                "/api/auth/me",
-                HttpMethod.GET,
-                HttpEntity.EMPTY,
-                Map.class);
+                "/api/auth/me", HttpMethod.GET,
+                HttpEntity.EMPTY, Map.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     }
 
     @Test
-    @DisplayName("로그아웃 후 세션 무효화 확인")
-    void logout_invalidatesSession() {
-        // 1. 회원가입
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
+    @DisplayName("로그아웃 후 클라이언트가 토큰을 폐기하면 /me 401 반환")
+    void logout_clientDiscardsToken_returns401() {
+        // 1. 회원가입 + 로그인
+        HttpHeaders jsonHeaders = new HttpHeaders();
+        jsonHeaders.setContentType(MediaType.APPLICATION_JSON);
         String registerBody = """
                 {
                   "email": "logout@test.com",
@@ -102,9 +85,8 @@ class AuthIntegrationTest {
                 }
                 """;
         restTemplate.exchange("/api/auth/register", HttpMethod.POST,
-                new HttpEntity<>(registerBody, headers), Map.class);
+                new HttpEntity<>(registerBody, jsonHeaders), Map.class);
 
-        // 2. 로그인
         String loginBody = """
                 {
                   "email": "logout@test.com",
@@ -113,24 +95,21 @@ class AuthIntegrationTest {
                 """;
         ResponseEntity<Map> loginResponse = restTemplate.exchange(
                 "/api/auth/login", HttpMethod.POST,
-                new HttpEntity<>(loginBody, headers), Map.class);
-        List<String> cookies = loginResponse.getHeaders().get(HttpHeaders.SET_COOKIE);
-        String jsessionId = cookies.stream()
-                .filter(c -> c.startsWith("JSESSIONID"))
-                .findFirst().orElseThrow().split(";")[0];
+                new HttpEntity<>(loginBody, jsonHeaders), Map.class);
+        String accessToken = (String) loginResponse.getBody().get("accessToken");
 
-        // 3. 로그아웃
-        HttpHeaders logoutHeaders = new HttpHeaders();
-        logoutHeaders.set(HttpHeaders.COOKIE, jsessionId);
+        // 2. 로그아웃 → 204
+        HttpHeaders authHeaders = new HttpHeaders();
+        authHeaders.setBearerAuth(accessToken);
         ResponseEntity<Void> logoutResponse = restTemplate.exchange(
                 "/api/auth/logout", HttpMethod.POST,
-                new HttpEntity<>(logoutHeaders), Void.class);
+                new HttpEntity<>(authHeaders), Void.class);
         assertThat(logoutResponse.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
 
-        // 4. 로그아웃 후 /me 접근 시 401
+        // 3. 토큰 폐기 후 빈 헤더로 /me 접근 → 401
         ResponseEntity<Map> meResponse = restTemplate.exchange(
                 "/api/auth/me", HttpMethod.GET,
-                new HttpEntity<>(logoutHeaders), Map.class);
+                HttpEntity.EMPTY, Map.class);
         assertThat(meResponse.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     }
 
@@ -147,11 +126,9 @@ class AuthIntegrationTest {
                 }
                 """;
 
-        // 첫 번째 가입
         restTemplate.exchange("/api/auth/register", HttpMethod.POST,
                 new HttpEntity<>(body, headers), Map.class);
 
-        // 두 번째 가입 (중복)
         ResponseEntity<Map> response = restTemplate.exchange("/api/auth/register", HttpMethod.POST,
                 new HttpEntity<>(body, headers), Map.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
