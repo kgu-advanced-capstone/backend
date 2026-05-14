@@ -4,10 +4,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
+import org.springframework.security.jackson2.SecurityJackson2Modules;
+import org.springframework.security.oauth2.client.jackson2.OAuth2ClientJackson2Module;
 import org.springframework.security.oauth2.client.web.AuthorizationRequestRepository;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.stereotype.Component;
-import org.springframework.util.SerializationUtils;
 
 import java.util.Base64;
 
@@ -21,7 +24,9 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
     private final ObjectMapper objectMapper;
 
     public HttpCookieOAuth2AuthorizationRequestRepository(ObjectMapper objectMapper) {
-        this.objectMapper = objectMapper;
+        this.objectMapper = objectMapper.copy();
+        this.objectMapper.registerModules(SecurityJackson2Modules.getModules(getClass().getClassLoader()));
+        this.objectMapper.registerModule(new OAuth2ClientJackson2Module());
     }
 
     @Override
@@ -36,13 +41,21 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
             deleteCookie(request, response);
             return;
         }
-        String encoded = Base64.getUrlEncoder().encodeToString(
-                SerializationUtils.serialize(authorizationRequest));
-        Cookie cookie = new Cookie(COOKIE_NAME, encoded);
-        cookie.setPath("/");
-        cookie.setHttpOnly(true);
-        cookie.setMaxAge(COOKIE_EXPIRE_SECONDS);
-        response.addCookie(cookie);
+        String encoded;
+        try {
+            encoded = Base64.getUrlEncoder().encodeToString(
+                    objectMapper.writeValueAsBytes(authorizationRequest));
+        } catch (Exception e) {
+            return;
+        }
+        ResponseCookie cookie = ResponseCookie.from(COOKIE_NAME, encoded)
+                .path("/")
+                .httpOnly(true)
+                .maxAge(COOKIE_EXPIRE_SECONDS)
+                .secure(true)
+                .sameSite("Lax")
+                .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
     }
 
     @Override
@@ -59,7 +72,7 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
             if (COOKIE_NAME.equals(cookie.getName())) {
                 try {
                     byte[] decoded = Base64.getUrlDecoder().decode(cookie.getValue());
-                    return (OAuth2AuthorizationRequest) SerializationUtils.deserialize(decoded);
+                    return objectMapper.readValue(decoded, OAuth2AuthorizationRequest.class);
                 } catch (Exception e) {
                     return null;
                 }
@@ -72,10 +85,13 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
         if (request.getCookies() == null) return;
         for (Cookie cookie : request.getCookies()) {
             if (COOKIE_NAME.equals(cookie.getName())) {
-                Cookie expired = new Cookie(COOKIE_NAME, "");
-                expired.setPath("/");
-                expired.setMaxAge(0);
-                response.addCookie(expired);
+                ResponseCookie expired = ResponseCookie.from(COOKIE_NAME, "")
+                        .path("/")
+                        .maxAge(0)
+                        .secure(true)
+                        .sameSite("Lax")
+                        .build();
+                response.addHeader(HttpHeaders.SET_COOKIE, expired.toString());
             }
         }
     }
