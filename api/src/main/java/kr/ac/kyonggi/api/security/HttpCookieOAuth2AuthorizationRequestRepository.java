@@ -87,11 +87,13 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
             if (COOKIE_NAME.equals(cookie.getName())) {
                 ResponseCookie expired = ResponseCookie.from(COOKIE_NAME, "")
                         .path("/")
+                        .httpOnly(true)
                         .maxAge(0)
                         .secure(true)
                         .sameSite("Lax")
                         .build();
                 response.addHeader(HttpHeaders.SET_COOKIE, expired.toString());
+                break;
             }
         }
     }
