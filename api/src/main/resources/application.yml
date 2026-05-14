@@ -15,10 +15,27 @@ spring:
       hibernate:
         generate_statistics: true
         format_sql: true
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            scope:
+              - email
+              - profile
 
   autoconfigure:
     exclude:
       - io.awspring.cloud.autoconfigure.s3.S3AutoConfiguration
+
+jwt:
+  secret: ${JWT_SECRET}
+  expiration-ms: 3600000
+
+oauth2:
+  redirect-uri: ${OAUTH2_REDIRECT_URI:https://capstone-frontend.jinhy.uk/oauth2/callback}
 
 cloud:
   aws:
@@ -41,15 +58,6 @@ storage:
   local:
     root-dir: ./uploads
     base-url: http://pcserver.cloud/files
-
-server:
-  servlet:
-    session:
-      cookie:
-        http-only: true
-        same-site: lax
-        name: JSESSIONID
-      timeout: 30m
 
 management:
   endpoints:
