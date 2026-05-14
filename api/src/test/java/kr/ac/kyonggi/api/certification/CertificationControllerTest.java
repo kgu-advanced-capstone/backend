@@ -7,14 +7,8 @@ import kr.ac.kyonggi.api.certification.dto.CertificationRequest;
 import kr.ac.kyonggi.api.certification.dto.CertificationResponse;
 import kr.ac.kyonggi.api.config.SecurityConfig;
 import kr.ac.kyonggi.api.security.CustomUserDetailsService;
-import kr.ac.kyonggi.api.security.HttpCookieOAuth2AuthorizationRequestRepository;
-import kr.ac.kyonggi.api.security.JwtAuthenticationFilter;
-import kr.ac.kyonggi.api.security.JwtTokenProvider;
 import kr.ac.kyonggi.api.security.LoginSuccessHandler;
-import kr.ac.kyonggi.api.security.OAuth2LoginSuccessHandler;
 import kr.ac.kyonggi.common.exception.CertificationNotFoundException;
-import kr.ac.kyonggi.common.exception.CustomAuthenticationEntryPoint;
-import kr.ac.kyonggi.infrastructure.oauth.CustomOAuth2UserService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,7 +32,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 
 @WebMvcTest(CertificationController.class)
-@Import({SecurityConfig.class, LoginSuccessHandler.class, JwtTokenProvider.class, JwtAuthenticationFilter.class, CustomAuthenticationEntryPoint.class, HttpCookieOAuth2AuthorizationRequestRepository.class})
+@Import({SecurityConfig.class, LoginSuccessHandler.class})
 @ActiveProfiles("test")
 class CertificationControllerTest {
 
@@ -53,12 +47,6 @@ class CertificationControllerTest {
 
     @MockitoBean
     AuthApiService authApiService;
-
-    @MockitoBean
-    CustomOAuth2UserService customOAuth2UserService;
-
-    @MockitoBean
-    OAuth2LoginSuccessHandler oauth2LoginSuccessHandler;
 
     private static final String EMAIL = "test@test.com";
 
