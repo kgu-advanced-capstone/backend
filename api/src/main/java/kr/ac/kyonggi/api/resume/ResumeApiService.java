@@ -1,5 +1,6 @@
 package kr.ac.kyonggi.api.resume;
 
+import kr.ac.kyonggi.api.resume.dto.ResumeDraftRequest;
 import kr.ac.kyonggi.api.resume.dto.ResumeResponse;
 import kr.ac.kyonggi.common.exception.ResumeNotFoundException;
 import kr.ac.kyonggi.domain.certification.Certification;
@@ -49,6 +50,20 @@ public class ResumeApiService {
         List<Education> educations = educationService.getAllByUserId(user.getId());
         List<Certification> certifications = certificationService.getAllByUserId(user.getId());
         return ResumeResponse.from(user, resume, experiences, educations, certifications);
+    }
+
+    @Transactional
+    public ResumeResponse saveDraft(String email, ResumeDraftRequest request) {
+        User user = userService.getByEmail(email);
+        Resume resume = resumeService.findByUserId(user.getId()).orElseGet(() -> Resume.createFor(user.getId()));
+        resume.updateCoverLetter(request.coverLetterTitle(), request.coverLetterContent());
+
+        Resume savedResume = resumeService.save(resume);
+        List<ResumedExperience> experiences = resumedExperienceRepository.findByResumeId(savedResume.getId());
+        List<Education> educations = educationService.getAllByUserId(user.getId());
+        List<Certification> certifications = certificationService.getAllByUserId(user.getId());
+
+        return ResumeResponse.from(user, savedResume, experiences, educations, certifications);
     }
 
     @Transactional

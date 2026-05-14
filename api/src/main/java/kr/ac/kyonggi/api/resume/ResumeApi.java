@@ -8,14 +8,17 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import kr.ac.kyonggi.api.resume.dto.ResumeDraftRequest;
 import kr.ac.kyonggi.api.resume.dto.ResumeResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
-@Tag(name = "Resume", description = "이력서 API — 조회 및 생성")
+@Tag(name = "Resume", description = "이력서 API — 조회, 저장 및 생성")
 public interface ResumeApi {
 
     @Operation(
@@ -32,6 +35,22 @@ public interface ResumeApi {
     @GetMapping
     ResponseEntity<ResumeResponse> getResume(
             @Parameter(hidden = true) @AuthenticationPrincipal UserDetails userDetails
+    );
+
+    @Operation(
+            summary = "이력서 초안 저장",
+            description = "자기소개서 제목과 본문을 저장합니다. 이력서가 없으면 새로 생성합니다.",
+            security = @SecurityRequirement(name = "cookieAuth")
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "저장 성공",
+                    content = @Content(schema = @Schema(implementation = ResumeResponse.class))),
+            @ApiResponse(responseCode = "401", description = "인증 필요", content = @Content)
+    })
+    @PatchMapping
+    ResponseEntity<ResumeResponse> saveDraft(
+            @Parameter(hidden = true) @AuthenticationPrincipal UserDetails userDetails,
+            @RequestBody ResumeDraftRequest request
     );
 
     @Operation(

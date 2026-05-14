@@ -3,6 +3,7 @@ package kr.ac.kyonggi.api.resume;
 import kr.ac.kyonggi.api.auth.AuthApiService;
 import kr.ac.kyonggi.api.config.SecurityConfig;
 import kr.ac.kyonggi.api.profile.dto.ProfileResponse;
+import kr.ac.kyonggi.api.resume.dto.ResumeDraftRequest;
 import kr.ac.kyonggi.api.resume.dto.ResumeResponse;
 import kr.ac.kyonggi.api.resume.dto.SummarizedExperienceResponse;
 import kr.ac.kyonggi.api.security.CustomUserDetailsService;
@@ -31,7 +32,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doThrow;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 @WebMvcTest(ResumeController.class)
@@ -63,7 +64,7 @@ class ResumeControllerTest {
         ProfileResponse profile = new ProfileResponse("홍길동", EMAIL, null, null, null, null);
         SummarizedExperienceResponse exp = new SummarizedExperienceResponse(
                 1L, "AI 기반 헬스케어", List.of("Spring Boot", "MySQL"), List.of("JWT 인증 구현", "배포 자동화 구성"));
-        return new ResumeResponse(profile, List.of(exp), List.of(), List.of(), LocalDateTime.now());
+        return new ResumeResponse(profile, "자기소개서", "지원 동기", List.of(exp), List.of(), List.of(), LocalDateTime.now());
     }
 
     // ── GET /api/resume ─────────────────────────────────────────────────────────
@@ -98,6 +99,32 @@ class ResumeControllerTest {
                 .bodyJson()
                 .extractingPath("$.summarizedExperiences[0].projectTitle")
                 .asString().isEqualTo("AI 기반 헬스케어");
+    }
+
+    // ── PATCH /api/resume ───────────────────────────────────────────────────────
+
+    @Test
+    @WithAnonymousUser
+    @DisplayName("PATCH /api/resume - 미인증 요청 401 반환")
+    void saveDraft_unauthenticated_returns401() {
+        assertThat(mockMvc.patch().uri("/api/resume")
+                .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                .content("{\"coverLetterTitle\":\"자기소개서\",\"coverLetterContent\":\"지원 동기\"}"))
+                .hasStatus(HttpStatus.UNAUTHORIZED);
+    }
+
+    @Test
+    @WithMockUser(username = EMAIL)
+    @DisplayName("PATCH /api/resume - 유효한 요청 200 및 저장된 초안 반환")
+    void saveDraft_validRequest_returns200() {
+        when(resumeApiService.saveDraft(eq(EMAIL), any())).thenReturn(sampleResumeResponse());
+
+        assertThat(mockMvc.patch().uri("/api/resume")
+                .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                .content("{\"coverLetterTitle\":\"자기소개서\",\"coverLetterContent\":\"지원 동기\"}"))
+                .hasStatus(HttpStatus.OK)
+                .bodyJson()
+                .extractingPath("$.coverLetterTitle").asString().isEqualTo("자기소개서");
     }
 
     // ── POST /api/resume/generate ────────────────────────────────────────────────

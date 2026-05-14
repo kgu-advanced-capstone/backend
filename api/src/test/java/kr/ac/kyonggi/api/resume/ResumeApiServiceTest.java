@@ -1,23 +1,19 @@
 package kr.ac.kyonggi.api.resume;
 
+import kr.ac.kyonggi.api.resume.dto.ResumeDraftRequest;
 import kr.ac.kyonggi.api.resume.dto.ResumeResponse;
 import kr.ac.kyonggi.common.exception.ResumeNotFoundException;
+import kr.ac.kyonggi.domain.certification.CertificationService;
+import kr.ac.kyonggi.domain.education.EducationService;
 import kr.ac.kyonggi.domain.experience.Experience;
 import kr.ac.kyonggi.domain.experience.ExperienceCreateCommand;
 import kr.ac.kyonggi.domain.experience.ExperienceService;
-import kr.ac.kyonggi.domain.project.Project;
-import kr.ac.kyonggi.domain.project.ProjectCreateCommand;
-import kr.ac.kyonggi.domain.project.ProjectMember;
-import kr.ac.kyonggi.domain.project.ProjectMemberCreateCommand;
-import kr.ac.kyonggi.domain.project.ProjectService;
-import kr.ac.kyonggi.domain.project.ProjectStatus;
-import kr.ac.kyonggi.domain.resume.Resume;
-import kr.ac.kyonggi.domain.resume.ResumedExperience;
-import kr.ac.kyonggi.domain.certification.CertificationService;
-import kr.ac.kyonggi.domain.education.EducationService;
-import kr.ac.kyonggi.domain.resume.ResumedExperienceRepository;
 import kr.ac.kyonggi.domain.experience.ExperienceSummarizer;
+import kr.ac.kyonggi.domain.project.*;
+import kr.ac.kyonggi.domain.resume.Resume;
 import kr.ac.kyonggi.domain.resume.ResumeService;
+import kr.ac.kyonggi.domain.resume.ResumedExperience;
+import kr.ac.kyonggi.domain.resume.ResumedExperienceRepository;
 import kr.ac.kyonggi.domain.user.User;
 import kr.ac.kyonggi.domain.user.UserCreateCommand;
 import kr.ac.kyonggi.domain.user.UserService;
@@ -99,6 +95,8 @@ class ResumeApiServiceTest {
         Resume mockResume = mock(Resume.class);
         when(mockResume.getId()).thenReturn(1L);
         when(mockResume.getGeneratedAt()).thenReturn(LocalDateTime.now());
+                when(mockResume.getCoverLetterTitle()).thenReturn("자기소개서");
+                when(mockResume.getCoverLetterContent()).thenReturn("지원 동기");
 
         given(userService.getByEmail(EMAIL)).willReturn(user);
         given(resumeService.findByUserId(USER_ID)).willReturn(Optional.of(mockResume));
@@ -109,10 +107,38 @@ class ResumeApiServiceTest {
         ResumeResponse result = resumeApiService.getResume(EMAIL);
 
         assertThat(result.basicInfo().email()).isEqualTo(EMAIL);
+                assertThat(result.coverLetterTitle()).isEqualTo("자기소개서");
+                assertThat(result.coverLetterContent()).isEqualTo("지원 동기");
         assertThat(result.summarizedExperiences()).isEmpty();
         assertThat(result.educations()).isEmpty();
         assertThat(result.certifications()).isEmpty();
     }
+
+        @Test
+        @DisplayName("saveDraft()는 이력서가 없으면 새로 생성하고 자기소개서를 저장한다")
+        void saveDraft_createsNewResume_whenNoExistingResume() {
+                ResumeDraftRequest request = new ResumeDraftRequest("  나의 이야기  ", "  첫 문단\n\n둘째 문단  ");
+
+                given(userService.getByEmail(EMAIL)).willReturn(user);
+                given(resumeService.findByUserId(USER_ID)).willReturn(Optional.empty());
+                given(resumeService.save(any(Resume.class))).willAnswer(inv -> {
+                        Resume r = inv.getArgument(0);
+                        ReflectionTestUtils.setField(r, "id", 7L);
+                        return r;
+                });
+                given(resumedExperienceRepository.findByResumeId(7L)).willReturn(List.of());
+                given(educationService.getAllByUserId(USER_ID)).willReturn(List.of());
+                given(certificationService.getAllByUserId(USER_ID)).willReturn(List.of());
+
+                ResumeResponse response = resumeApiService.saveDraft(EMAIL, request);
+
+                ArgumentCaptor<Resume> captor = ArgumentCaptor.forClass(Resume.class);
+                verify(resumeService).save(captor.capture());
+                assertThat(captor.getValue().getCoverLetterTitle()).isEqualTo("나의 이야기");
+                assertThat(captor.getValue().getCoverLetterContent()).isEqualTo("첫 문단\n\n둘째 문단");
+                assertThat(response.coverLetterTitle()).isEqualTo("나의 이야기");
+                assertThat(response.coverLetterContent()).isEqualTo("첫 문단\n\n둘째 문단");
+        }
 
     // ── generate() ────────────────────────────────────────────────────────────
 

@@ -67,6 +67,8 @@ CREATE TABLE notifications (
 CREATE TABLE resumes (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     user_id BIGINT NOT NULL UNIQUE,
+    cover_letter_title VARCHAR(40) NOT NULL DEFAULT '자기소개서',
+    cover_letter_content VARCHAR(4000) NOT NULL DEFAULT '',
     generated_at DATETIME(6)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

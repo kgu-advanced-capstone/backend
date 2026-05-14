@@ -18,6 +18,12 @@ public record ResumeResponse(
         @Schema(description = "기본 프로필 정보")
         ProfileResponse basicInfo,
 
+        @Schema(description = "자기소개서 제목", example = "자기소개서")
+        String coverLetterTitle,
+
+        @Schema(description = "자기소개서 본문", example = "지원 동기와 강점을 작성한 내용")
+        String coverLetterContent,
+
         @ArraySchema(
                 arraySchema = @Schema(description = "AI 요약된 프로젝트 활동 목록"),
                 schema = @Schema(implementation = SummarizedExperienceResponse.class)
@@ -43,6 +49,8 @@ public record ResumeResponse(
                                       List<Education> educations, List<Certification> certifications) {
         return new ResumeResponse(
                 ProfileResponse.from(user),
+                resume.getCoverLetterTitle(),
+                resume.getCoverLetterContent(),
                 experiences.stream().map(SummarizedExperienceResponse::from).toList(),
                 educations.stream().map(EducationResponse::from).toList(),
                 certifications.stream().map(CertificationResponse::from).toList(),
