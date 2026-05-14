@@ -3,16 +3,9 @@ package kr.ac.kyonggi.api.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletResponse;
 import kr.ac.kyonggi.api.security.CustomUserDetailsService;
-import kr.ac.kyonggi.api.security.HttpCookieOAuth2AuthorizationRequestRepository;
 import kr.ac.kyonggi.api.security.JsonLoginFilter;
-import kr.ac.kyonggi.api.security.JwtAuthenticationFilter;
-import kr.ac.kyonggi.api.security.JwtTokenProvider;
 import kr.ac.kyonggi.api.security.LoginSuccessHandler;
-import kr.ac.kyonggi.api.security.OAuth2LoginSuccessHandler;
-import kr.ac.kyonggi.common.exception.CustomAuthenticationEntryPoint;
-import kr.ac.kyonggi.infrastructure.oauth.CustomOAuth2UserService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -25,6 +18,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -38,9 +32,6 @@ public class SecurityConfig {
 
     private final CustomUserDetailsService userDetailsService;
 
-    @Value("${oauth2.redirect-uri}")
-    private String oauth2RedirectUri;
-
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -51,15 +42,13 @@ public class SecurityConfig {
             HttpSecurity http,
             AuthenticationConfiguration authConfig,
             LoginSuccessHandler loginSuccessHandler,
-            ObjectMapper objectMapper,
-            JwtTokenProvider jwtTokenProvider,
-            CustomOAuth2UserService customOAuth2UserService,
-            OAuth2LoginSuccessHandler oauth2LoginSuccessHandler,
-            CustomAuthenticationEntryPoint customAuthenticationEntryPoint,
-            HttpCookieOAuth2AuthorizationRequestRepository cookieAuthorizationRequestRepository
+            ObjectMapper objectMapper
     ) throws Exception {
 
+        HttpSessionSecurityContextRepository sessionRepo = new HttpSessionSecurityContextRepository();
+
         JsonLoginFilter jsonLoginFilter = new JsonLoginFilter(authConfig.getAuthenticationManager(), objectMapper);
+        jsonLoginFilter.setSecurityContextRepository(sessionRepo);
         jsonLoginFilter.setAuthenticationSuccessHandler(loginSuccessHandler);
         jsonLoginFilter.setAuthenticationFailureHandler((request, response, exception) -> {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
@@ -70,31 +59,24 @@ public class SecurityConfig {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
+                .securityContext(sc -> sc.securityContextRepository(sessionRepo))
                 .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/actuator/**").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/api/auth/register", "/api/auth/login", "/api/auth/logout").permitAll()
-                        .requestMatchers("/oauth2/authorization/**", "/login/oauth2/code/**").permitAll()
                         .requestMatchers("/files/**").permitAll()
-                        .requestMatchers("/error").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/projects", "/api/projects/*").permitAll()
                         .anyRequest().authenticated())
-                .oauth2Login(oauth2 -> oauth2
-                        .authorizationEndpoint(auth -> auth
-                                .authorizationRequestRepository(cookieAuthorizationRequestRepository))
-                        .redirectionEndpoint(redirection -> redirection
-                                .baseUri("/login/oauth2/code/*"))
-                        .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
-                        .successHandler(oauth2LoginSuccessHandler)
-                        .failureHandler((request, response, exception) ->
-                                response.sendRedirect(oauth2RedirectUri + "?error=true")))
                 .exceptionHandling(ex -> ex
-                        .authenticationEntryPoint(customAuthenticationEntryPoint))
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            response.setContentType(MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8");
+                            response.getWriter().write("{\"message\":\"인증이 필요합니다.\",\"code\":401}");
+                        }))
                 .userDetailsService(userDetailsService)
-                .addFilterAt(jsonLoginFilter, UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);
+                .addFilterAt(jsonLoginFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
